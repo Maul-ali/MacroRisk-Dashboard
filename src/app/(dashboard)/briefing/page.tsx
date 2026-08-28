@@ -21,7 +21,7 @@ export default function BriefingPage() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-text-primary">
-              FI MacroRisk Assessment
+              Mac
             </h2>
             <p className="text-xs text-text-muted">
               Generated Aug 24, 2026, 10:34 WIB · Formula v1.3

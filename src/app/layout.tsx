@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'FI MacroRisk Radar — Fertilizer Indo Macro Intelligence',
+  title: 'Macrorisk Dashboard — Fertilizer Indo Macro Intelligence',
   description:
     'Executive macro-risk dashboard for fertilizer industry strategy. Live data from 10 sources across 17 indicators. Powered by MaxAI.',
   keywords: [

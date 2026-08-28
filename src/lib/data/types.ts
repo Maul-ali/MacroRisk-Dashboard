@@ -1,4 +1,4 @@
-// ─── Core Data Types for FI MacroRisk Radar ───
+// ─── Core Data Types for MacroRisk Dashboard ───
 
 export type RiskBand = 'Low' | 'Guarded' | 'Elevated' | 'High' | 'Critical';
 

@@ -54,10 +54,10 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="animate-fade-in overflow-hidden">
             <h1 className="text-sm font-bold text-text-primary tracking-tight leading-tight whitespace-nowrap">
-              FI MacroRisk
+              MacroRisk Dashboard
             </h1>
             <p className="text-[10px] font-medium text-text-muted tracking-widest uppercase whitespace-nowrap">
-              Radar
+              Indo Fertilizer
             </p>
           </div>
         )}
