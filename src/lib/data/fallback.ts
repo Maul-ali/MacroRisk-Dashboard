@@ -1,4 +1,4 @@
-// ─── Fallback Data from FI_MacroRisk_Radar_Summary.md ───
+// ─── Fallback Data from MacroRisk_Summary.md ───
 // All 17 indicators with static values as last-known-good defaults.
 // Each includes plausible history[] for chart rendering.
 
