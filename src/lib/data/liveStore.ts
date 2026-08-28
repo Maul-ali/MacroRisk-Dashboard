@@ -18,6 +18,7 @@ import {
   FALLBACK_SYSTEM_TRUST,
   FALLBACK_NEWS,
 } from './fallback';
+import { fetchLiveEia } from './fetchers/eia';
 import { fetchLiveFx } from './fetchers/openFx';
 import { fetchLiveCommodities } from './fetchers/commodities';
 import { fetchLiveMacro } from './fetchers/worldbank';
@@ -77,16 +78,22 @@ export async function refreshLiveData(): Promise<{
   news: NewsArticle[];
 }> {
   try {
-    const [fxData, commodityData, macroData, newsData] = await Promise.allSettled([
+    const [fxData, eiaData, commodityData, macroData, newsData] = await Promise.allSettled([
       fetchLiveFx(),
+      fetchLiveEia(),
       fetchLiveCommodities(),
       fetchLiveMacro(),
       fetchLiveNews(),
     ]);
 
     const liveFx = fxData.status === 'fulfilled' ? fxData.value : {};
-    const liveCommodities = commodityData.status === 'fulfilled' ? commodityData.value : {};
+    const liveEia = eiaData.status === 'fulfilled' ? eiaData.value : {};
+    const liveCommoditiesRaw = commodityData.status === 'fulfilled' ? commodityData.value : {};
+    const liveCommodities = { ...liveCommoditiesRaw, ...liveEia };
     const liveMacro = macroData.status === 'fulfilled' ? macroData.value : {};
+    console.log(
+      `[LiveStore] EIA: ${Object.keys(liveEia).length}/3 series | Yahoo: ${Object.keys(liveCommoditiesRaw).length}/4 series`
+    );
     if (newsData.status === 'fulfilled' && newsData.value.length > 0) {
       cachedNews = newsData.value;
     }
