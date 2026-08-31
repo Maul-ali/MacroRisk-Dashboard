@@ -91,9 +91,7 @@ export async function refreshLiveData(): Promise<{
     const liveCommoditiesRaw = commodityData.status === 'fulfilled' ? commodityData.value : {};
     const liveCommodities = { ...liveCommoditiesRaw, ...liveEia };
     const liveMacro = macroData.status === 'fulfilled' ? macroData.value : {};
-    console.log(
-      `[LiveStore] EIA: ${Object.keys(liveEia).length}/3 series | Yahoo: ${Object.keys(liveCommoditiesRaw).length}/4 series`
-    );
+    console.log(`[LiveStore] EIA: ${Object.keys(liveEia).length}/3 | Yahoo: ${Object.keys(liveCommoditiesRaw).length}/3 | keys eia=[${Object.keys(liveEia)}] yahoo=[${Object.keys(liveCommoditiesRaw)}]`);
     if (newsData.status === 'fulfilled' && newsData.value.length > 0) {
       cachedNews = newsData.value;
     }

@@ -103,7 +103,7 @@ export async function fetchLiveEia(apiKey?: string): Promise<Record<string, EiaR
           price: Math.round(quote.value * 100) / 100,
           change1M: quote.change1M,
           lastUpdated: nowIso,
-          source: 'U.S. EIA (Official)',
+          source: 'U.S. EIA',
         };
       }
     })
