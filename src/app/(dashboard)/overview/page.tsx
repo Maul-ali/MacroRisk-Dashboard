@@ -43,6 +43,17 @@ export default function OverviewPage() {
           ? 'var(--risk-guarded)'
           : 'var(--risk-low)';
 
+  const riskGradientBg =
+    risk.score >= 80
+      ? 'rgba(239, 68, 68, 0.14)'
+      : risk.score >= 65
+        ? 'rgba(245, 158, 11, 0.14)'
+        : risk.score >= 50
+          ? 'rgba(59, 130, 246, 0.14)'
+          : 'rgba(34, 197, 94, 0.14)';
+
+
+
   // SVG ring params
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
@@ -70,7 +81,12 @@ export default function OverviewPage() {
       {/* ── Score Card + Category Breakdown ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-children">
         {/* Main Score Card */}
-        <div className="glass-card p-8 flex flex-col items-center justify-center text-center lg:col-span-1">
+        <div
+          className="glass-card p-8 flex flex-col items-center justify-center text-center lg:col-span-1 relative overflow-hidden border"
+          style={{
+            background: `linear-gradient(135deg, ${riskGradientBg}, var(--bg-card))`,
+          }}
+        >
           {/* Score Ring */}
           <div className="score-ring mb-4">
             <svg width="164" height="164" viewBox="0 0 164 164">

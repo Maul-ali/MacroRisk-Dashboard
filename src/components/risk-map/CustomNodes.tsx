@@ -125,32 +125,32 @@ export const OutcomeNode = memo(function OutcomeNode({
     <div
       className={clsx(
         'relative px-4 py-3.5 rounded-2xl transition-all duration-200 cursor-pointer min-w-[190px] max-w-[210px] select-none',
-        'shadow-xl hover:shadow-2xl border border-sky-400/40',
-        selected && 'ring-2 ring-white ring-offset-2 ring-offset-bg-primary'
+        'bg-bg-card shadow-xl hover:shadow-2xl border-2 border-sky-400/50 hover:border-sky-400',
+        selected && 'ring-2 ring-sky-400 ring-offset-2 ring-offset-bg-primary'
       )}
       style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        backgroundImage: 'linear-gradient(135deg, var(--bg-card) 0%, var(--bg-tertiary) 100%)',
       }}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-2.5 !h-2.5 !bg-sky-400 !border-2 !border-slate-900"
+        className="!w-2.5 !h-2.5 !bg-sky-400 !border-2 !border-bg-card"
       />
 
       <div className="flex items-center gap-1.5 mb-1">
         <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-        <span className="text-[9px] font-bold tracking-widest uppercase text-sky-300/80">
+        <span className="text-[9px] font-bold tracking-widest uppercase text-sky-500">
           Outcome Utama
         </span>
       </div>
 
-      <h4 className="text-sm font-extrabold text-white tracking-wide">
+      <h4 className="text-sm font-extrabold text-text-primary tracking-wide">
         {data.label}
       </h4>
 
       {data.description && (
-        <p className="text-[10px] text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+        <p className="text-[10px] text-text-secondary mt-1 line-clamp-2 leading-relaxed">
           {data.description}
         </p>
       )}

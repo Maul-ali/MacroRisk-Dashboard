@@ -377,7 +377,7 @@ export default function RiskMapCanvas() {
               <span>Derived Factor</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-slate-900 border border-sky-400/40" />
+              <span className="w-2.5 h-2.5 rounded-sm bg-bg-card border-2 border-sky-400/60" />
               <span className="font-medium text-text-secondary">Outcome</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -435,7 +435,7 @@ export default function RiskMapCanvas() {
                 zoomable
                 pannable
                 nodeColor={(node) => {
-                  if (node.type === 'outcomeNode') return '#0f172a';
+                  if (node.type === 'outcomeNode') return '#38bdf8';
                   if (node.data?.isFlagged) return '#ef4444';
                   if (node.data?.category === 'Market') return '#10b981';
                   if (node.data?.category === 'Operational') return '#38bdf8';

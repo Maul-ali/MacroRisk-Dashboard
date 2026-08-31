@@ -450,10 +450,9 @@ export default function RingkasanPage() {
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 stagger-children">
         {/* Hero Score Card */}
         <div
-          className="lg:col-span-2 glass-card p-6 flex flex-col justify-between"
+          className="lg:col-span-2 glass-card p-6 flex flex-col justify-between relative overflow-hidden border border-chart-4/30"
           style={{
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85))',
-            borderColor: 'rgba(20, 184, 166, 0.2)',
+            background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.12), var(--bg-card))',
           }}
         >
           <div>
