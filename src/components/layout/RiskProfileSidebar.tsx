@@ -10,10 +10,12 @@ import {
   ChevronDown,
   Calendar,
   Shield,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 const SUB_NAV_ITEMS = [
   { href: '/risk-profile/ringkasan', label: 'Ringkasan', icon: LayoutGrid },
+  { href: '/risk-profile/threshold', label: 'Threshold', icon: SlidersHorizontal },
   { href: '/risk-profile/peta-risiko', label: 'Peta Risiko', icon: Map },
   { href: '/risk-profile/kamus-risiko', label: 'Kamus Risiko', icon: BookOpen },
 ];
@@ -76,10 +78,10 @@ export default function RiskProfileSidebar({ collapsed }: RiskProfileSidebarProp
             href="/overview"
             className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium text-text-muted hover:text-text-secondary hover:bg-bg-card-hover transition-all"
           >
-            Makro Risk
+            Macro Risk
           </Link>
           <div className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold text-text-primary bg-bg-card shadow-sm border border-bg-glass-border">
-            Profil Risiko
+            Risk Profile
           </div>
         </div>
       </div>

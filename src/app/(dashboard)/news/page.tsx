@@ -41,11 +41,11 @@ export default function NewsPage() {
             </div>
 
             <h3 className="text-sm font-semibold text-text-primary mb-2 leading-snug group-hover:text-text-accent transition-colors">
-              {article.title}
+              {article.title.replace(/<[^>]+>/g, '').replace(/https?:\/\/[^\s]+/g, '').trim()}
             </h3>
 
             <p className="text-xs text-text-secondary leading-relaxed mb-3">
-              {article.summary}
+              {article.summary.replace(/<[^>]+>/g, '').replace(/href=["'][^"']*["']/g, '').replace(/https?:\/\/[^\s]+/g, '').trim()}
             </p>
 
             <div className="flex items-center justify-between">

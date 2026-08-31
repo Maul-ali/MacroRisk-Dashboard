@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
 import {
@@ -16,6 +17,7 @@ import {
   DollarSign,
   Globe,
   Building2,
+  ShieldAlert,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -52,7 +54,18 @@ export default function OverviewPage() {
         title="Overview"
         subtitle="FI Macro Risk Score — composite risk assessment across all categories"
         badge={{ label: risk.label, variant: risk.label as 'Elevated' }}
-      />
+      >
+        <Link
+          href="/risk-profile/ringkasan"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-chart-4/40 bg-chart-4/10 hover:bg-chart-4/20 text-xs font-semibold text-chart-4 transition-all shadow-xs"
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>Profil Risiko Korporasi</span>
+          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-chart-4/20 text-chart-4 font-bold">
+            1.588 PPR-2
+          </span>
+        </Link>
+      </PageHeader>
 
       {/* ── Score Card + Category Breakdown ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-children">

@@ -4,26 +4,89 @@
 import type { NewsArticle } from '../types';
 import { FALLBACK_NEWS } from '../fallback';
 
-// Extract text between XML tags cleanly
-function extractTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
-  if (!match) return '';
-  let content = match[1].trim();
+// Robust text cleaner to strip CDATA, decode HTML entities, and remove all HTML tags / href fragments
+export function cleanHtmlText(raw: string): string {
+  if (!raw) return '';
+  let content = raw.trim();
+
   // Strip CDATA wrapper if present
   if (content.startsWith('<![CDATA[') && content.endsWith(']]>')) {
     content = content.slice(9, -3).trim();
   }
-  // Strip inner HTML tags
-  content = content.replace(/<[^>]+>/g, '').trim();
-  // Decode common HTML entities
-  content = content
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ');
+
+  // Iteratively decode HTML entities up to 3 times (handles double-encoded entities from RSS)
+  for (let i = 0; i < 3; i++) {
+    const prev = content;
+    content = content
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#(\d+);/g, (_, dec) => {
+        try {
+          return String.fromCharCode(Number(dec));
+        } catch {
+          return '';
+        }
+      })
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+        try {
+          return String.fromCharCode(parseInt(hex, 16));
+        } catch {
+          return '';
+        }
+      });
+    if (content === prev) break;
+  }
+
+  // Strip all HTML tags
+  content = content.replace(/<[^>]+>/gi, ' ');
+
+  // Remove any leftover raw href/url/target attributes from malformed RSS descriptions
+  content = content.replace(/\bhref=["'][^"']*["']/gi, ' ');
+  content = content.replace(/\btarget=["'][^"']*["']/gi, ' ');
+  content = content.replace(/https?:\/\/[^\s]+/gi, ' ');
+
+  // Normalize whitespace
+  content = content.replace(/\s+/g, ' ').trim();
+
   return content;
+}
+
+// Extract raw content between XML tags
+function extractRawTag(xml: string, tag: string): string {
+  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+  if (!match) return '';
+  let content = match[1].trim();
+  if (content.startsWith('<![CDATA[') && content.endsWith(']]>')) {
+    content = content.slice(9, -3).trim();
+  }
+  return content;
+}
+
+// Extract link URL specifically
+function extractLinkUrl(itemXml: string): string {
+  // Check <link> tag
+  const linkMatch = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
+  if (linkMatch && linkMatch[1]) {
+    const raw = cleanHtmlText(linkMatch[1]);
+    if (raw.startsWith('http')) return raw;
+  }
+
+  // Check <link href="..." />
+  const hrefMatch = itemXml.match(/<link[^>]+href=["']([^"']+)["']/i);
+  if (hrefMatch && hrefMatch[1]) return hrefMatch[1];
+
+  // Check <guid isPermaLink="true">
+  const guidMatch = itemXml.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
+  if (guidMatch && guidMatch[1] && guidMatch[1].startsWith('http')) {
+    return guidMatch[1].trim();
+  }
+
+  return 'https://news.google.com';
 }
 
 // Extract source domain or channel
@@ -144,31 +207,50 @@ export async function fetchLiveNews(): Promise<NewsArticle[]> {
       const itemBlocks = xml.split('<item>').slice(1);
 
       for (const itemBlock of itemBlocks.slice(0, 8)) {
-        const title = extractTag(itemBlock, 'title');
-        const link = extractTag(itemBlock, 'link');
-        const pubDateStr = extractTag(itemBlock, 'pubDate');
-        const rawDesc = extractTag(itemBlock, 'description');
-        const rawSource = extractTag(itemBlock, 'source');
+        const rawTitle = extractRawTag(itemBlock, 'title');
+        const rawLink = extractLinkUrl(itemBlock);
+        const pubDateStr = extractRawTag(itemBlock, 'pubDate');
+        const rawDesc = extractRawTag(itemBlock, 'description');
+        const rawSource = extractRawTag(itemBlock, 'source');
 
-        if (!title) continue;
+        let cleanTitle = cleanHtmlText(rawTitle);
+        if (!cleanTitle) continue;
 
-        const combinedText = `${title} ${rawDesc}`;
-        const sourceName = rawSource || extractSource(link, feed.fallbackSource);
+        // Separate source name from Google News title if formatted as "Title - Source"
+        let detectedSource = cleanHtmlText(rawSource);
+        if (!detectedSource && cleanTitle.includes(' - ')) {
+          const parts = cleanTitle.split(' - ');
+          if (parts.length >= 2 && parts[parts.length - 1].length < 40) {
+            detectedSource = parts.pop()!.trim();
+            cleanTitle = parts.join(' - ').trim();
+          }
+        }
+
+        const sourceName = detectedSource || extractSource(rawLink, feed.fallbackSource);
         const publishedAt = pubDateStr ? new Date(pubDateStr).toISOString() : new Date().toISOString();
+
+        let cleanSummary = cleanHtmlText(rawDesc);
+        // If description is empty or just duplicate of title, create clean synthesis
+        if (!cleanSummary || cleanSummary.length < 25 || cleanSummary.toLowerCase() === cleanTitle.toLowerCase()) {
+          cleanSummary = `${cleanTitle} — Macro intelligence signal monitored for geopolitical and commodity risk impact.`;
+        } else if (cleanSummary.length > 220) {
+          cleanSummary = cleanSummary.slice(0, 220).trim() + '...';
+        }
+
+        const combinedText = `${cleanTitle} ${cleanSummary}`;
         const region = detectRegion(combinedText);
         const tags = detectTags(combinedText);
         const relevanceScore = calculateRelevance(combinedText);
-        const summary = rawDesc.length > 20 ? rawDesc.slice(0, 220) + (rawDesc.length > 220 ? '...' : '') : `${title} - Macro intelligence signal for risk monitoring.`;
 
         articles.push({
           id: `live-news-${articles.length + 1}-${Math.random().toString(36).slice(2, 7)}`,
-          title,
+          title: cleanTitle,
           source: sourceName,
-          sourceUrl: link || 'https://news.google.com',
+          sourceUrl: rawLink,
           publishedAt,
           region,
           tags,
-          summary,
+          summary: cleanSummary,
           relevanceScore,
         });
       }

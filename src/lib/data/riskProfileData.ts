@@ -757,3 +757,599 @@ export const RISK_MAP_RELATIONS: RiskMapRelation[] = [
   { parameterId: 'ops-15', parameterName: 'Rata-Rata Downtime: NPK', taxonomy: 'Operational Risk', status: 'Within Limit', production: true, revenue: true, cost: true, margin: false, cashFlow: false },
   { parameterId: 'ops-16', parameterName: 'Efisiensi Energi (GJ/ton produk)', taxonomy: 'Operational Risk', status: 'Within Limit', production: true, revenue: false, cost: true, margin: true, cashFlow: false },
 ];
+
+// ─── Peta Risiko (Node-Link Diagram Data) ───
+
+export type RelationshipType = 'Searah' | 'Berlawanan' | 'Dampak tertunda';
+
+export interface RiskDiagramEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: RelationshipType;
+  label?: string;
+  description?: string;
+}
+
+export interface RiskDiagramNodeData extends Record<string, unknown> {
+  id: string;
+  label: string;
+  sublabel?: string;
+  category: 'Market' | 'Operational' | 'Mid-tier' | 'Outcome';
+  tier: 1 | 2 | 3;
+  parameterId?: string;
+  status?: RiskStatus;
+  currentValue?: string;
+  formula?: string;
+  description?: string;
+  isFlagged?: boolean; // outside threshold (> Tolerance or > Trigger)
+}
+
+export interface RiskDiagramNode {
+  id: string;
+  type: 'paramNode' | 'midTierNode' | 'outcomeNode';
+  position: { x: number; y: number };
+  data: RiskDiagramNodeData;
+}
+
+export const DIAGRAM_NODES: RiskDiagramNode[] = [
+  // ── Column 1: Market & Feedstock Inputs (Tier 1) ──
+  {
+    id: 'node-mkt-05',
+    type: 'paramNode',
+    position: { x: 30, y: 30 },
+    data: {
+      id: 'node-mkt-05',
+      label: 'Harga Jual Urea',
+      sublabel: '310 USD/ton',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-05',
+      status: 'Within Limit',
+      currentValue: '310 USD/ton',
+      formula: 'FOB Middle East / Baltic Index benchmark',
+      description: 'Harga patokan ekspor & penjualan urea internasional.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-mkt-01',
+    type: 'paramNode',
+    position: { x: 30, y: 130 },
+    data: {
+      id: 'node-mkt-01',
+      label: 'Harga DAP',
+      sublabel: '792 USD/ton',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-01',
+      status: 'Within Appetite',
+      currentValue: '792 USD/ton',
+      formula: 'CFR Southeast Asia benchmark spot price',
+      description: 'Harga bahan baku fosfat impor untuk produksi NPK.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-mkt-02',
+    type: 'paramNode',
+    position: { x: 30, y: 230 },
+    data: {
+      id: 'node-mkt-02',
+      label: 'Harga KCL',
+      sublabel: '385 USD/ton',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-02',
+      status: 'Within Appetite',
+      currentValue: '385 USD/ton',
+      formula: 'Standard MOP CFR Indonesia contract index',
+      description: 'Harga bahan baku kalium impor untuk formulasi NPK.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-mkt-03',
+    type: 'paramNode',
+    position: { x: 30, y: 330 },
+    data: {
+      id: 'node-mkt-03',
+      label: 'Harga Gas Feedstock',
+      sublabel: '8.57 USD/MMBTU',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-03',
+      status: '> Tolerance',
+      currentValue: '8.57 USD/MMBTU',
+      formula: 'Weighted Average Gas Price (Kepmen ESDM)',
+      description: 'Komponen biaya bahan baku utama pabrik ammonia/urea.',
+      isFlagged: true,
+    },
+  },
+  {
+    id: 'node-mkt-04',
+    type: 'paramNode',
+    position: { x: 30, y: 430 },
+    data: {
+      id: 'node-mkt-04',
+      label: 'Nilai Tukar USD/IDR',
+      sublabel: '15,250 IDR/USD',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-04',
+      status: 'Within Limit',
+      currentValue: '15,250 IDR/USD',
+      formula: 'Kurs Tengah Bank Indonesia (JISDOR)',
+      description: 'Eksposur valas atas pembelian bahan baku dan utang luar negeri.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-mkt-08',
+    type: 'paramNode',
+    position: { x: 30, y: 530 },
+    data: {
+      id: 'node-mkt-08',
+      label: 'Harga Ammonia Import',
+      sublabel: '420 USD/ton',
+      category: 'Market',
+      tier: 1,
+      parameterId: 'mkt-08',
+      status: 'Within Limit',
+      currentValue: '420 USD/ton',
+      formula: 'CFR Far East Ammonia Spot Price',
+      description: 'Harga referensi impor ammonia substitusi saat pabrik overhaul.',
+      isFlagged: false,
+    },
+  },
+
+  // ── Column 2: Operational & Supply Inputs (Tier 1) ──
+  {
+    id: 'node-ops-10',
+    type: 'paramNode',
+    position: { x: 260, y: 30 },
+    data: {
+      id: 'node-ops-10',
+      label: 'Supply Gas & Stok Bahan',
+      sublabel: '45 Hari',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'ops-10',
+      status: 'Within Limit',
+      currentValue: '45 Hari',
+      formula: 'Total Buffer Stock / Rata-rata Konsumsi Harian',
+      description: 'Ketahanan pasokan gas alam dan inventori bahan baku kritis.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-ops-01',
+    type: 'paramNode',
+    position: { x: 260, y: 130 },
+    data: {
+      id: 'node-ops-01',
+      label: 'Downtime Pabrik Amonia',
+      sublabel: '34.87 Days',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'ops-01',
+      status: 'Within Appetite',
+      currentValue: '34.87 Days',
+      formula: 'Total Unplanned Outage Days per Semester',
+      description: 'Hari henti operasi tidak terencana pada unit synthesis loop amonia.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-ops-06',
+    type: 'paramNode',
+    position: { x: 260, y: 230 },
+    data: {
+      id: 'node-ops-06',
+      label: 'Utilisasi Pabrik Urea',
+      sublabel: '94.5%',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'ops-06',
+      status: 'Within Limit',
+      currentValue: '94.5%',
+      formula: 'Realisasi Produksi / Kapasitas Desain Terpasang',
+      description: 'Efisiensi beban operasional reaktor prilling urea.',
+      isFlagged: false,
+    },
+  },
+  {
+    id: 'node-ops-02',
+    type: 'paramNode',
+    position: { x: 260, y: 330 },
+    data: {
+      id: 'node-ops-02',
+      label: 'Penjualan Urea Non-Subsidi',
+      sublabel: '78.6%',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'ops-02',
+      status: '> Tolerance',
+      currentValue: '78.6%',
+      formula: 'Realisasi Sales Volume / Target Rencana Kerja',
+      description: 'Penyerapan produk komersial retail & korporasi perkebunan.',
+      isFlagged: true,
+    },
+  },
+  {
+    id: 'node-ops-04',
+    type: 'paramNode',
+    position: { x: 260, y: 430 },
+    data: {
+      id: 'node-ops-04',
+      label: 'Penjualan NPK Non-Subsidi',
+      sublabel: '68.6%',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'ops-04',
+      status: '> Tolerance',
+      currentValue: '68.6%',
+      formula: 'Realisasi Sales Volume NPK / Target RKAP',
+      description: 'Penjualan produk NPK formula custom & komersial.',
+      isFlagged: true,
+    },
+  },
+  {
+    id: 'node-reg-01',
+    type: 'paramNode',
+    position: { x: 260, y: 530 },
+    data: {
+      id: 'node-reg-01',
+      label: 'Penyaluran Pupuk Subsidi',
+      sublabel: '47.4%',
+      category: 'Operational',
+      tier: 1,
+      parameterId: 'reg-01',
+      status: '> Tolerance',
+      currentValue: '47.4%',
+      formula: 'Realisasi Alokasi e-RDKK / Kuota Kementerian Pertanian',
+      description: 'Pemenuhan mandat PSO pupuk bersubsidi nasional.',
+      isFlagged: true,
+    },
+  },
+
+  // ── Column 3: Mid-tier / Derived Factors (Tier 2) ──
+  {
+    id: 'node-mid-01',
+    type: 'midTierNode',
+    position: { x: 500, y: 50 },
+    data: {
+      id: 'node-mid-01',
+      label: 'Volume Produksi Urea & NPK',
+      sublabel: 'Derived Factor',
+      category: 'Mid-tier',
+      tier: 2,
+      formula: 'Kapasitas × Utilisasi - Dampak Downtime',
+      description: 'Akumulasi output fisik pupuk siap kemas di gudang pusat.',
+    },
+  },
+  {
+    id: 'node-mid-02',
+    type: 'midTierNode',
+    position: { x: 500, y: 170 },
+    data: {
+      id: 'node-mid-02',
+      label: 'Biaya Bahan Baku (Gas, DAP, KCL)',
+      sublabel: 'Derived Factor',
+      category: 'Mid-tier',
+      tier: 2,
+      formula: '∑(Volume Konsumsi × Harga Spot/Kontrak USD × Kurs)',
+      description: 'Total beban pengadaan raw material langsung (COGS feedstock).',
+    },
+  },
+  {
+    id: 'node-mid-03',
+    type: 'midTierNode',
+    position: { x: 500, y: 290 },
+    data: {
+      id: 'node-mid-03',
+      label: 'Volume Penjualan Total',
+      sublabel: 'Derived Factor',
+      category: 'Mid-tier',
+      tier: 2,
+      formula: 'Penyaluran Subsidi + Penjualan Komersial Retail/B2B',
+      description: 'Total tonase pupuk yang berhasil tersalurkan dan tertagih.',
+    },
+  },
+  {
+    id: 'node-mid-04',
+    type: 'midTierNode',
+    position: { x: 500, y: 410 },
+    data: {
+      id: 'node-mid-04',
+      label: 'Loss NPK & Chemical Waste',
+      sublabel: 'Derived Factor',
+      category: 'Mid-tier',
+      tier: 2,
+      formula: 'Scrap & Off-spec Tons / Total Input Raw Material',
+      description: 'Inefisiensi formulasi zat aditif dan scrap proses granulasi.',
+    },
+  },
+  {
+    id: 'node-mid-05',
+    type: 'midTierNode',
+    position: { x: 500, y: 530 },
+    data: {
+      id: 'node-mid-05',
+      label: 'Beban Operasional & Logistik',
+      sublabel: 'Derived Factor',
+      category: 'Mid-tier',
+      tier: 2,
+      formula: 'Freight Cost + Packaging + Plant Maintenance OPEX',
+      description: 'Biaya distribusi ke lini 1-4 dan perawatan fasilitas.',
+    },
+  },
+
+  // ── Column 4: Outcomes (Tier 3) ──
+  {
+    id: 'node-out-prod',
+    type: 'outcomeNode',
+    position: { x: 770, y: 50 },
+    data: {
+      id: 'node-out-prod',
+      label: 'Produksi',
+      sublabel: 'Outcome Utama',
+      category: 'Outcome',
+      tier: 3,
+      description: 'Kinerja output pabrik fisik memenuhi target ketahanan pupuk.',
+    },
+  },
+  {
+    id: 'node-out-cost',
+    type: 'outcomeNode',
+    position: { x: 770, y: 170 },
+    data: {
+      id: 'node-out-cost',
+      label: 'Biaya Produksi',
+      sublabel: 'Outcome Utama',
+      category: 'Outcome',
+      tier: 3,
+      description: 'HPP (Harga Pokok Produksi) total per ton urea & NPK.',
+    },
+  },
+  {
+    id: 'node-out-rev',
+    type: 'outcomeNode',
+    position: { x: 770, y: 290 },
+    data: {
+      id: 'node-out-rev',
+      label: 'Revenue',
+      sublabel: 'Outcome Utama',
+      category: 'Outcome',
+      tier: 3,
+      description: 'Pendapatan kotor dari subsidi pemerintah dan penjualan retail.',
+    },
+  },
+  {
+    id: 'node-out-margin',
+    type: 'outcomeNode',
+    position: { x: 770, y: 410 },
+    data: {
+      id: 'node-out-margin',
+      label: 'Margin',
+      sublabel: 'Outcome Utama',
+      category: 'Outcome',
+      tier: 3,
+      description: 'Profitabilitas operasional (Gross & EBITDA Margin).',
+    },
+  },
+  {
+    id: 'node-out-cash',
+    type: 'outcomeNode',
+    position: { x: 770, y: 530 },
+    data: {
+      id: 'node-out-cash',
+      label: 'Arus Kas Operasi',
+      sublabel: 'Outcome Utama',
+      category: 'Outcome',
+      tier: 3,
+      description: 'Likuiditas dan kecukupan kas masuk dari penagihan piutang subsidi.',
+    },
+  },
+];
+
+export const DIAGRAM_EDGES: RiskDiagramEdge[] = [
+  // ── Production Flow ──
+  {
+    id: 'e-ops10-prod',
+    source: 'node-ops-10',
+    target: 'node-mid-01',
+    type: 'Searah',
+    label: '+',
+    description: 'Pasokan gas & stok bahan baku menjamin kelancaran volume produksi',
+  },
+  {
+    id: 'e-ops01-prod',
+    source: 'node-ops-01',
+    target: 'node-mid-01',
+    type: 'Berlawanan',
+    label: '-',
+    description: 'Downtime pabrik amonia menurunkan volume produksi pupuk',
+  },
+  {
+    id: 'e-ops06-prod',
+    source: 'node-ops-06',
+    target: 'node-mid-01',
+    type: 'Searah',
+    label: '+',
+    description: 'Tingkat utilisasi tinggi menaikkan volume output pabrik',
+  },
+  {
+    id: 'e-mid01-outprod',
+    source: 'node-mid-01',
+    target: 'node-out-prod',
+    type: 'Searah',
+    label: '+',
+    description: 'Volume produksi langsung menentukan pencapaian target Produksi',
+  },
+
+  // ── Cost Flow ──
+  {
+    id: 'e-mkt01-midcost',
+    source: 'node-mkt-01',
+    target: 'node-mid-02',
+    type: 'Searah',
+    label: '+',
+    description: 'Kenaikan harga DAP menaikkan total biaya bahan baku',
+  },
+  {
+    id: 'e-mkt02-midcost',
+    source: 'node-mkt-02',
+    target: 'node-mid-02',
+    type: 'Searah',
+    label: '+',
+    description: 'Kenaikan harga KCL menaikkan total biaya bahan baku',
+  },
+  {
+    id: 'e-mkt03-midcost',
+    source: 'node-mkt-03',
+    target: 'node-mid-02',
+    type: 'Searah',
+    label: '+',
+    description: 'Kenaikan harga gas feedstock menaikkan biaya bahan baku secara signifikan',
+  },
+  {
+    id: 'e-mkt04-midcost',
+    source: 'node-mkt-04',
+    target: 'node-mid-02',
+    type: 'Searah',
+    label: '+',
+    description: 'Pelemahan IDR terhadap USD meningkatkan biaya impor bahan baku',
+  },
+  {
+    id: 'e-mkt08-midcost',
+    source: 'node-mkt-08',
+    target: 'node-mid-02',
+    type: 'Searah',
+    label: '+',
+    description: 'Harga impor ammonia substitusi menaikkan biaya bahan baku',
+  },
+  {
+    id: 'e-mid02-outcost',
+    source: 'node-mid-02',
+    target: 'node-out-cost',
+    type: 'Searah',
+    label: '+',
+    description: 'Biaya bahan baku merupakan komponen terbesar Biaya Produksi',
+  },
+  {
+    id: 'e-mid04-outcost',
+    source: 'node-mid-04',
+    target: 'node-out-cost',
+    type: 'Searah',
+    description: 'Loss chemical & waste menaikkan beban biaya produksi',
+  },
+  {
+    id: 'e-mid05-outcost',
+    source: 'node-mid-05',
+    target: 'node-out-cost',
+    type: 'Searah',
+    description: 'Beban operasional & logistik menambah total biaya produksi',
+  },
+
+  // ── Revenue Flow ──
+  {
+    id: 'e-mkt05-midrev',
+    source: 'node-mkt-05',
+    target: 'node-out-rev',
+    type: 'Searah',
+    label: '+',
+    description: 'Harga jual urea internasional menaikkan realisasi Revenue ekspor',
+  },
+  {
+    id: 'e-ops02-midvol',
+    source: 'node-ops-02',
+    target: 'node-mid-03',
+    type: 'Searah',
+    label: '+',
+    description: 'Penjualan urea non-subsidi menambah volume penjualan total',
+  },
+  {
+    id: 'e-ops04-midvol',
+    source: 'node-ops-04',
+    target: 'node-mid-03',
+    type: 'Searah',
+    label: '+',
+    description: 'Penjualan NPK non-subsidi menambah volume penjualan total',
+  },
+  {
+    id: 'e-reg01-midvol',
+    source: 'node-reg-01',
+    target: 'node-mid-03',
+    type: 'Searah',
+    label: '+',
+    description: 'Penyaluran pupuk subsidi berkontribusi ke volume penjualan',
+  },
+  {
+    id: 'e-mid03-outrev',
+    source: 'node-mid-03',
+    target: 'node-out-rev',
+    type: 'Searah',
+    label: '+',
+    description: 'Volume penjualan total menggerakkan pencapaian Revenue',
+  },
+
+  // ── Margin Flow ──
+  {
+    id: 'e-outrev-margin',
+    source: 'node-out-rev',
+    target: 'node-out-margin',
+    type: 'Searah',
+    label: '+',
+    description: 'Kenaikan Revenue mendorong perluasan Margin laba',
+  },
+  {
+    id: 'e-outcost-margin',
+    source: 'node-out-cost',
+    target: 'node-out-margin',
+    type: 'Berlawanan',
+    label: '-',
+    description: 'Kenaikan Biaya Produksi langsung menggerus Margin laba',
+  },
+  {
+    id: 'e-mkt03-margin',
+    source: 'node-mkt-03',
+    target: 'node-out-margin',
+    type: 'Berlawanan',
+    label: '-',
+    description: 'Lonjakan harga gas menekan gross profit margin',
+  },
+
+  // ── Cash Flow Flow ──
+  {
+    id: 'e-outrev-cash',
+    source: 'node-out-rev',
+    target: 'node-out-cash',
+    type: 'Searah',
+    label: '+',
+    description: 'Revenue terealisasi meningkatkan arus kas masuk operasi',
+  },
+  {
+    id: 'e-outcost-cash',
+    source: 'node-out-cost',
+    target: 'node-out-cash',
+    type: 'Berlawanan',
+    label: '-',
+    description: 'Pengeluaran kas untuk biaya produksi mengurangi saldo kas',
+  },
+  {
+    id: 'e-reg01-cash',
+    source: 'node-reg-01',
+    target: 'node-out-cash',
+    type: 'Dampak tertunda',
+    description: 'Pencairan tagihan subsidi pemerintah memiliki siklus pembayaran tertunda',
+  },
+  {
+    id: 'e-mkt04-cash',
+    source: 'node-mkt-04',
+    target: 'node-out-cash',
+    type: 'Dampak tertunda',
+    description: 'Fluktuasi kurs USD berdampak tertunda pada settlement kewajiban valas',
+  },
+];
+
