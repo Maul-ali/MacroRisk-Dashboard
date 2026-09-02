@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
+import AIBriefWidget from '@/components/overview/AIBriefWidget';
 import {
   getCompositeRiskScore,
   getMarketPulse,
@@ -216,6 +217,9 @@ export default function OverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ── AI Executive Briefing (Powered by Google Gemini) ── */}
+      <AIBriefWidget />
 
       {/* ── Risk Trajectory Chart ── */}
       <RiskTrajectoryChart initialHistory={getRiskHistory()} />
