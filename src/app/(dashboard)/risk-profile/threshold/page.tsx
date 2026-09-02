@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { clsx } from 'clsx';
@@ -48,15 +48,46 @@ function ThresholdContent() {
   const searchParams = useSearchParams();
   const initialTaxonomy = searchParams.get('taxonomy') as RiskTaxonomy | null;
 
+  const [dbParameters, setDbParameters] = useState<RiskParameter[]>(RISK_PROFILE.parameters);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedTaxonomy, setSelectedTaxonomy] = useState<string>(initialTaxonomy || 'all');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [selectedParam, setSelectedParam] = useState<RiskParameter | null>(null);
 
+  // Fetch parameters from Neon Database
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch('/api/risk-profile/parameters');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setDbParameters(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load parameters from database:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const parameters = dbParameters;
+
+  // Dynamic status distribution
+  const statusCounts = useMemo(() => ({
+    withinLimit: parameters.filter((p) => p.status === 'Within Limit').length,
+    withinAppetite: parameters.filter((p) => p.status === 'Within Appetite').length,
+    withinTolerance: parameters.filter((p) => p.status === 'Within Tolerance').length,
+    overTolerance: parameters.filter((p) => p.status === '> Tolerance').length,
+    overTrigger: parameters.filter((p) => p.status === '> Trigger Level').length,
+  }), [parameters]);
+
   // Filtered parameters
   const filteredParameters = useMemo(() => {
-    return RISK_PROFILE.parameters.filter((p) => {
+    return parameters.filter((p) => {
       // Status filter
       if (statusFilter !== 'all' && p.status !== statusFilter) return false;
 
@@ -75,7 +106,7 @@ function ThresholdContent() {
 
       return true;
     });
-  }, [statusFilter, selectedTaxonomy, searchQuery]);
+  }, [parameters, statusFilter, selectedTaxonomy, searchQuery]);
 
   // Export to CSV helper
   const handleExportCsv = () => {
@@ -165,9 +196,9 @@ function ThresholdContent() {
                 onChange={(e) => setSelectedTaxonomy(e.target.value)}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium bg-bg-tertiary/80 border border-border-primary text-text-primary focus:outline-none focus:border-chart-1 cursor-pointer max-w-[220px] truncate"
               >
-                <option value="all">Semua Taksonomi (8)</option>
+                <option value="all">Semua Taksonomi ({parameters.length})</option>
                 {TAXONOMY_ORDER.map((tax) => {
-                  const count = RISK_PROFILE.parameters.filter((p) => p.taxonomy === tax).length;
+                  const count = parameters.filter((p) => p.taxonomy === tax).length;
                   return (
                     <option key={tax} value={tax}>
                       {tax} ({count})
@@ -213,18 +244,20 @@ function ThresholdContent() {
         <div className="pt-2 border-t border-border-subtle/50 flex flex-wrap gap-2">
           {STATUS_FILTERS.map((tab) => {
             const isActive = statusFilter === tab.key;
+            const tabCount = tab.key === 'all' ? parameters.length : (statusCounts as any)[tab.countKey || ''];
+            const displayLabel = tab.key === 'all' ? `Semua (${parameters.length})` : `${tab.label} (${tabCount ?? 0})`;
             return (
               <button
                 key={tab.key}
                 onClick={() => setStatusFilter(tab.key)}
                 className={clsx(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border',
+                  'px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5',
                   isActive
-                    ? 'bg-bg-card border-border-primary text-text-primary shadow-xs font-semibold'
-                    : 'border-transparent text-text-muted hover:text-text-secondary hover:bg-bg-tertiary/50'
+                    ? 'bg-bg-card text-text-primary border border-border-primary shadow-xs font-bold'
+                    : 'bg-bg-tertiary/50 text-text-muted hover:text-text-secondary border border-transparent'
                 )}
               >
-                {tab.label}
+                <span>{displayLabel}</span>
               </button>
             );
           })}

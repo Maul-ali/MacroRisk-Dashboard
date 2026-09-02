@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import { clsx } from 'clsx';
@@ -342,6 +342,8 @@ function GroupThresholdModal({
 export default function RingkasanPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [selectedParameter, setSelectedParameter] = useState<RiskParameter | null>(null);
+  const [dbParameters, setDbParameters] = useState<RiskParameter[]>(RISK_PROFILE.parameters);
+  const [loading, setLoading] = useState(true);
 
   // Group modal states for taxonomy / status / all thresholds pop-up
   const [groupModalData, setGroupModalData] = useState<{
@@ -351,7 +353,63 @@ export default function RingkasanPage() {
     taxonomyName?: string;
   } | null>(null);
 
-  const attentionParams = getAttentionParameters();
+  // Fetch from Neon Database API
+  useEffect(() => {
+    async function loadParameters() {
+      try {
+        const res = await fetch('/api/risk-profile/parameters');
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setDbParameters(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to load risk parameters from database:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadParameters();
+  }, []);
+
+  const parameters = dbParameters;
+
+  // Dynamic status distribution counts
+  const statusCounts = {
+    withinLimit: parameters.filter((p) => p.status === 'Within Limit').length,
+    withinAppetite: parameters.filter((p) => p.status === 'Within Appetite').length,
+    withinTolerance: parameters.filter((p) => p.status === 'Within Tolerance').length,
+    overTolerance: parameters.filter((p) => p.status === '> Tolerance').length,
+    overTrigger: parameters.filter((p) => p.status === '> Trigger Level').length,
+  };
+
+  // Dynamic taxonomy breakdown matrix
+  const taxonomyList: RiskTaxonomy[] = [
+    'Strategic Risk',
+    'Market and Macroeconomic Risk',
+    'Financial Risk',
+    'Credit/Counterparty Risk',
+    'Operational Risk',
+    'Investment/Project Risk',
+    'Reputational Risk',
+    'Regulatory, Legal & Compliance Risk',
+  ];
+
+  const taxonomyBreakdown = taxonomyList.map((taxonomy) => {
+    const list = parameters.filter((p) => p.taxonomy === taxonomy);
+    return {
+      taxonomy,
+      limit: list.filter((p) => p.status === 'Within Limit').length,
+      appetite: list.filter((p) => p.status === 'Within Appetite').length,
+      tolerance: list.filter((p) => p.status === 'Within Tolerance').length,
+      overTolerance: list.filter((p) => p.status === '> Tolerance').length,
+      overTrigger: list.filter((p) => p.status === '> Trigger Level').length,
+      total: list.length,
+    };
+  });
+
+  // Dynamic Management Attention list (non-limit parameters)
+  const attentionParams = parameters.filter((p) => p.status !== 'Within Limit');
+
   const filteredParams =
     activeFilter === 'all'
       ? attentionParams
@@ -370,7 +428,7 @@ export default function RingkasanPage() {
 
   // Trigger Taxonomy Modal
   const handleTaxonomyClick = (taxonomy: RiskTaxonomy, count: number) => {
-    const params = RISK_PROFILE.parameters.filter((p) => p.taxonomy === taxonomy);
+    const params = parameters.filter((p) => p.taxonomy === taxonomy);
     setGroupModalData({
       title: `${taxonomy}`,
       subtitle: `Daftar dan batasan threshold untuk ${count} parameter risiko ${taxonomy} (Periode Juni 2026).`,
@@ -381,7 +439,7 @@ export default function RingkasanPage() {
 
   // Trigger Status Modal
   const handleStatusClick = (status: RiskStatus, count: number) => {
-    const params = RISK_PROFILE.parameters.filter((p) => p.status === status);
+    const params = parameters.filter((p) => p.status === status);
     setGroupModalData({
       title: `Status: ${status}`,
       subtitle: `Daftar ${count} parameter risiko dengan posisi status ${status} pada realisasi Juni 2026.`,
@@ -389,12 +447,12 @@ export default function RingkasanPage() {
     });
   };
 
-  // Trigger All 43 Thresholds Modal
+  // Trigger All Thresholds Modal
   const handleAllThresholdsClick = () => {
     setGroupModalData({
-      title: 'Seluruh 43 Threshold Parameter Risiko',
+      title: `Seluruh ${parameters.length} Threshold Parameter Risiko`,
       subtitle: 'Ringkasan komprehensif posisi seluruh parameter risiko korporasi terhadap batasan Limit, Appetite, Tolerance, dan Trigger Level.',
-      parameters: RISK_PROFILE.parameters,
+      parameters: parameters,
     });
   };
 
@@ -489,8 +547,8 @@ export default function RingkasanPage() {
 
         {/* 5 Status Cards */}
         {STATUS_CARDS.map((card) => {
-          const count = RISK_PROFILE.statusCounts[card.countKey];
-          const pct = ((count / RISK_PROFILE.totalParameters) * 100).toFixed(1);
+          const count = statusCounts[card.countKey];
+          const pct = parameters.length > 0 ? ((count / parameters.length) * 100).toFixed(1) : '0.0';
           const color = getStatusColor(card.status);
 
           return (
@@ -511,7 +569,7 @@ export default function RingkasanPage() {
                 {count}
               </p>
               <p className="text-xs text-text-muted mt-1">
-                {pct}% dari {RISK_PROFILE.totalParameters} parameter
+                {pct}% dari {parameters.length} parameter
               </p>
               {/* Circle button */}
               <div
@@ -560,7 +618,7 @@ export default function RingkasanPage() {
                 </tr>
               </thead>
               <tbody>
-                {RISK_PROFILE.taxonomyBreakdown.map((row) => (
+                {taxonomyBreakdown.map((row) => (
                   <tr
                     key={row.taxonomy}
                     onClick={() => handleTaxonomyClick(row.taxonomy, row.total)}
