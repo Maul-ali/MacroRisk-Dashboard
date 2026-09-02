@@ -2,6 +2,7 @@
 
 import { Clock, Signal, Sun, Moon, RotateCw } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { clsx } from 'clsx';
 
@@ -52,6 +53,8 @@ export default function Header() {
     }
   };
 
+  const pathname = usePathname();
+  const isRiskProfile = pathname.startsWith('/risk-profile');
   const isDark = theme === 'dark';
 
   return (
@@ -59,10 +62,12 @@ export default function Header() {
       {/* Left: Breadcrumb area */}
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold text-text-primary">
-          Fertilizer Indo Macro Intelligence
+          {isRiskProfile ? 'Fertilizer Indo Corporate Risk Profile' : 'Fertilizer Indo Macro Intelligence'}
         </span>
         <span className="text-text-muted">·</span>
-        <span className="text-xs text-text-muted">Powered by MaxAI</span>
+        <span className="text-xs text-text-muted">
+          {isRiskProfile ? 'Enterprise Risk Management' : 'Powered by MaxAI'}
+        </span>
       </div>
 
       {/* Right: System info + controls */}

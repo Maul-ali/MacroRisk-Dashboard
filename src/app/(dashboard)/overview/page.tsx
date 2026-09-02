@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
+import AIBriefWidget from '@/components/overview/AIBriefWidget';
 import {
   getCompositeRiskScore,
   getMarketPulse,
@@ -16,6 +18,7 @@ import {
   DollarSign,
   Globe,
   Building2,
+  ShieldAlert,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -41,6 +44,17 @@ export default function OverviewPage() {
           ? 'var(--risk-guarded)'
           : 'var(--risk-low)';
 
+  const riskGradientBg =
+    risk.score >= 80
+      ? 'rgba(239, 68, 68, 0.14)'
+      : risk.score >= 65
+        ? 'rgba(245, 158, 11, 0.14)'
+        : risk.score >= 50
+          ? 'rgba(59, 130, 246, 0.14)'
+          : 'rgba(34, 197, 94, 0.14)';
+
+
+
   // SVG ring params
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
@@ -52,12 +66,28 @@ export default function OverviewPage() {
         title="Overview"
         subtitle="FI Macro Risk Score — composite risk assessment across all categories"
         badge={{ label: risk.label, variant: risk.label as 'Elevated' }}
-      />
+      >
+        <Link
+          href="/risk-profile/ringkasan"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-chart-4/40 bg-chart-4/10 hover:bg-chart-4/20 text-xs font-semibold text-chart-4 transition-all shadow-xs"
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>Profil Risiko Korporasi</span>
+          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-chart-4/20 text-chart-4 font-bold">
+            1.588 PPR-2
+          </span>
+        </Link>
+      </PageHeader>
 
       {/* ── Score Card + Category Breakdown ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 stagger-children">
         {/* Main Score Card */}
-        <div className="glass-card p-8 flex flex-col items-center justify-center text-center lg:col-span-1">
+        <div
+          className="glass-card p-8 flex flex-col items-center justify-center text-center lg:col-span-1 relative overflow-hidden border"
+          style={{
+            background: `linear-gradient(135deg, ${riskGradientBg}, var(--bg-card))`,
+          }}
+        >
           {/* Score Ring */}
           <div className="score-ring mb-4">
             <svg width="164" height="164" viewBox="0 0 164 164">
@@ -187,6 +217,9 @@ export default function OverviewPage() {
           </div>
         </div>
       </div>
+
+      {/* ── AI Executive Briefing (Powered by Google Gemini) ── */}
+      <AIBriefWidget />
 
       {/* ── Risk Trajectory Chart ── */}
       <RiskTrajectoryChart initialHistory={getRiskHistory()} />
