@@ -61,10 +61,10 @@ function LoginForm() {
           <ShieldAlert className="w-7 h-7" />
         </div>
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-          FI MacroRisk Radar
+          RiskCompass
         </h1>
         <p className="text-xs text-text-muted mt-1">
-          Enterprise Risk Intelligence &amp; Macroeconomic Radar
+          Enterprise Risk Intelligence &amp; Macroeconomy
         </p>
       </div>
 
