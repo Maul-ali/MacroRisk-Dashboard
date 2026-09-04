@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import './globals.css';
 
 const inter = Inter({
@@ -12,7 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Macrorisk Dashboard — Fertilizer Indo Macro Intelligence',
   description:
-    'Executive macro-risk dashboard for fertilizer industry strategy. Live data from 10 sources across 17 indicators. Powered by MaxAI.',
+    'Executive macro-risk dashboard for fertilizer industry strategy. Live data from 10 sources across 17 indicators.',
   keywords: [
     'fertilizer',
     'macro risk',
@@ -55,8 +56,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-screen antialiased bg-bg-primary text-text-primary selection:bg-chart-1/30 selection:text-text-primary">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+

@@ -9,7 +9,7 @@ import {
   BarChart3,
   Newspaper,
   Bell,
-  FileText,
+  Sparkles,
   Database,
   Radio,
   Settings,
@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   { href: '/commodities', label: 'Commodities', icon: BarChart3 },
   { href: '/news', label: 'News Intelligence', icon: Newspaper },
   { href: '/alerts', label: 'Alerts', icon: Bell },
-  { href: '/briefing', label: 'Executive Brief', icon: FileText },
+  { href: '/briefing', label: 'AI Executive Briefing', icon: Sparkles, badge: 'AI' },
   { href: '/catalog', label: 'Data Catalog', icon: Database },
   { href: '/news-control', label: 'News Control', icon: Radio },
   { href: '/admin', label: 'Admin', icon: Settings },
@@ -148,7 +148,14 @@ export default function Sidebar() {
                 >
                   <Icon className="w-[18px] h-[18px] shrink-0" />
                   {!collapsed && (
-                    <span className="truncate whitespace-nowrap">{item.label}</span>
+                    <span className="truncate whitespace-nowrap flex items-center gap-2">
+                      {item.label}
+                      {'badge' in item && item.badge && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-chart-1/20 to-chart-2/20 text-chart-1 border border-chart-1/30 uppercase tracking-wider">
+                          {item.badge}
+                        </span>
+                      )}
+                    </span>
                   )}
                 </Link>
               );

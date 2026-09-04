@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
-import AIBriefWidget from '@/components/overview/AIBriefWidget';
 import {
   getCompositeRiskScore,
   getMarketPulse,
@@ -19,6 +18,9 @@ import {
   Globe,
   Building2,
   ShieldAlert,
+  Sparkles,
+  ArrowRight,
+  Bot,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -67,16 +69,25 @@ export default function OverviewPage() {
         subtitle="FI Macro Risk Score — composite risk assessment across all categories"
         badge={{ label: risk.label, variant: risk.label as 'Elevated' }}
       >
-        <Link
-          href="/risk-profile/ringkasan"
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-chart-4/40 bg-chart-4/10 hover:bg-chart-4/20 text-xs font-semibold text-chart-4 transition-all shadow-xs"
-        >
-          <ShieldAlert className="w-4 h-4" />
-          <span>Profil Risiko Korporasi</span>
-          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-chart-4/20 text-chart-4 font-bold">
-            1.588 PPR-2
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/briefing"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-chart-1 to-chart-2 text-white hover:opacity-95 transition-opacity shadow-glow-blue"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>AI Executive Briefing</span>
+          </Link>
+          <Link
+            href="/risk-profile/ringkasan"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-chart-4/40 bg-chart-4/10 hover:bg-chart-4/20 text-xs font-semibold text-chart-4 transition-all shadow-xs"
+          >
+            <ShieldAlert className="w-4 h-4" />
+            <span>Profil Risiko Korporasi</span>
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-chart-4/20 text-chart-4 font-bold">
+              1.588 PPR-2
+            </span>
+          </Link>
+        </div>
       </PageHeader>
 
       {/* ── Score Card + Category Breakdown ── */}
@@ -218,8 +229,49 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* ── AI Executive Briefing (Powered by Google Gemini) ── */}
-      <AIBriefWidget />
+      {/* ── AI Executive Briefing CTA Banner ── */}
+      <Link
+        href="/briefing"
+        className="block group"
+      >
+        <div
+          className="glass-card p-6 relative overflow-hidden border border-chart-1/20 hover:border-chart-1/40 transition-all cursor-pointer"
+          style={{
+            background:
+              'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.06), var(--bg-card))',
+          }}
+        >
+          {/* Ambient Glow */}
+          <div className="absolute top-0 right-0 w-96 h-32 bg-gradient-to-l from-chart-1/10 to-transparent blur-3xl pointer-events-none group-hover:from-chart-1/15 transition-all" />
+          <div className="absolute bottom-0 left-0 w-64 h-24 bg-gradient-to-r from-chart-2/8 to-transparent blur-3xl pointer-events-none" />
+
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-chart-1 to-chart-2 flex items-center justify-center shadow-glow-blue text-white group-hover:scale-105 transition-transform">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-base font-bold text-text-primary">
+                    AI Executive Briefing
+                  </h3>
+                  <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-chart-1/15 text-chart-1 border border-chart-1/30 uppercase tracking-wider">
+                    <Bot className="w-2.5 h-2.5" />
+                    Multi-Model AI
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Sintesis otomatis intelijen makro, komoditas energi, dan 43 parameter profil risiko korporasi menggunakan Google Gemini & DeepSeek.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-chart-1 group-hover:translate-x-1 transition-transform">
+              <span className="text-xs font-bold hidden sm:inline">Buka Briefing</span>
+              <ArrowRight className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      </Link>
 
       {/* ── Risk Trajectory Chart ── */}
       <RiskTrajectoryChart initialHistory={getRiskHistory()} />
