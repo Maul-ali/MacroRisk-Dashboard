@@ -70,7 +70,7 @@ export async function fetchLiveCommodities(): Promise<Record<string, CommodityRe
           price: quote.price,
           change1M: quote.change1M,
           lastUpdated: nowIso,
-          source: 'Live Market Index Feed',
+          source: 'Yahoo Finance (unofficial endpoint)',
         };
       }
     })

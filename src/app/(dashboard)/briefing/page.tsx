@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 import PageHeader from '@/components/shared/PageHeader';
-import { getCompositeRiskScore } from '@/lib/data/indicators';
+import { getCompositeRiskScoreSync } from '@/lib/data/indicators';
 import {
   Sparkles,
   RefreshCw,
@@ -58,7 +58,7 @@ const MODEL_OPTIONS: { key: ModelOption; label: string; provider: 'Google' | 'De
 ];
 
 export default function AIBriefingPage() {
-  const risk = getCompositeRiskScore();
+  const risk = getCompositeRiskScoreSync();
   const [focus, setFocus] = useState<FocusArea>('all');
   const [language, setLanguage] = useState<'id' | 'en'>('id');
   const [model, setModel] = useState<ModelOption>('gemini-3.6-flash');

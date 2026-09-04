@@ -4,9 +4,11 @@ import { getIndicatorsByCategory, getAllIndicators } from '@/lib/data/indicators
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { clsx } from 'clsx';
 
-export default function MacroPage() {
-  const fxMacro = getIndicatorsByCategory('FX & Macro');
-  const allIndicators = getAllIndicators();
+export default async function MacroPage() {
+  const [fxMacro, allIndicators] = await Promise.all([
+    getIndicatorsByCategory('FX & Macro'),
+    getAllIndicators(),
+  ]);
 
   return (
     <div className="space-y-6">

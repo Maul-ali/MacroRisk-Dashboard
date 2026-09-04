@@ -2,8 +2,8 @@ import PageHeader from '@/components/shared/PageHeader';
 import { getAllIndicators } from '@/lib/data/indicators';
 import { clsx } from 'clsx';
 
-export default function CatalogPage() {
-  const indicators = getAllIndicators();
+export default async function CatalogPage() {
+  const indicators = await getAllIndicators();
 
   return (
     <div className="space-y-6">

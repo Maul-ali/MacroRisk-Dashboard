@@ -23,6 +23,7 @@ import { fetchLiveFx } from './fetchers/openFx';
 import { fetchLiveCommodities } from './fetchers/commodities';
 import { fetchLiveMacro } from './fetchers/worldbank';
 import { fetchLiveNews } from './fetchers/news';
+import { loadIndicatorCacheFromDb, saveIndicatorCacheToDb } from '../db/indicatorCache';
 
 let cachedIndicators: Indicator[] = [...FALLBACK_INDICATORS];
 let cachedRiskScore: CompositeRiskScore = { ...FALLBACK_RISK_SCORE };
@@ -31,12 +32,27 @@ let cachedSystemTrust: SystemTrust = { ...FALLBACK_SYSTEM_TRUST };
 let cachedNews: NewsArticle[] = [...FALLBACK_NEWS];
 let lastSyncTimestamp: number = 0;
 
+let refreshInFlight: Promise<void> | null = null;
+let hydrationInFlight: Promise<void> | null = null;
+
+const FETCHABLE_INDICATOR_IDS = new Set([
+  'brent',
+  'wti',
+  'henry-hub',
+  'vix',
+  'usd-idr',
+  'usd-jpy',
+  'cpi-yoy',
+  'real-gdp',
+  'real-gdp-yoy',
+]);
+
 // Format display values cleanly
 function formatDisplayValue(id: string, value: number, unit: string): string {
   if (id === 'usd-idr') {
     return `Rp ${value.toLocaleString('id-ID')}`;
   }
-  if (id === 'cpi-yoy' || id === 'real-gdp') {
+  if (id === 'cpi-yoy' || id === 'real-gdp' || id === 'real-gdp-yoy') {
     return `${value}%`;
   }
   if (id === 'vix' || id === 'usd-broad-idx' || id === 'phosphoric-acid' || id === 'sulfuric-acid') {
@@ -110,6 +126,7 @@ export async function refreshLiveData(): Promise<{
         updated.change1M = fx.change1M;
         updated.lastUpdated = fx.lastUpdated;
         updated.source = fx.source;
+        updated.dataOrigin = 'live';
         updated.freshness = 'Fresh';
         updated.riskBand = computeRiskBand(item.id, fx.rate, fx.change1M);
         freshCount++;
@@ -120,6 +137,7 @@ export async function refreshLiveData(): Promise<{
         updated.change1M = comm.change1M;
         updated.lastUpdated = comm.lastUpdated;
         updated.source = comm.source;
+        updated.dataOrigin = 'live';
         updated.freshness = 'Fresh';
         updated.riskBand = computeRiskBand(item.id, comm.price, comm.change1M);
         freshCount++;
@@ -130,10 +148,12 @@ export async function refreshLiveData(): Promise<{
         updated.change1M = mac.change1M;
         updated.lastUpdated = mac.lastUpdated;
         updated.source = mac.source;
+        updated.dataOrigin = 'live';
         updated.freshness = 'Fresh';
         freshCount++;
-      } else if (item.id === 'phosphate-rock') {
-        freshCount++;
+      } else {
+        updated.dataOrigin = 'fallback';
+        updated.freshness = FETCHABLE_INDICATOR_IDS.has(item.id) ? 'Stale' : 'Estimated';
       }
 
       return updated;
@@ -218,6 +238,18 @@ export async function refreshLiveData(): Promise<{
     };
 
     lastSyncTimestamp = Date.now();
+
+    // Persist cache to Neon Postgres
+    saveIndicatorCacheToDb({
+      indicators: cachedIndicators,
+      riskScore: cachedRiskScore,
+      marketPulse: cachedMarketPulse,
+      systemTrust: cachedSystemTrust,
+      news: cachedNews,
+      lastSyncTimestamp,
+    }).catch((err) => {
+      console.warn('[LiveStore] Failed to persist cache to DB:', err);
+    });
   } catch (err) {
     console.error('[LiveStore] Error refreshing live data:', err);
   }
@@ -230,18 +262,121 @@ export async function refreshLiveData(): Promise<{
   };
 }
 
-// Ensure store is triggered initially
-if (typeof window === 'undefined') {
-  if (Date.now() - lastSyncTimestamp > 60000) {
-    refreshLiveData().catch(() => { });
+// Ensure store is hydrated from DB cache before first request
+export async function ensureCacheHydrated(): Promise<void> {
+  if (typeof window === 'undefined' && lastSyncTimestamp === 0) {
+    if (!hydrationInFlight) {
+      hydrationInFlight = (async () => {
+        try {
+          const dbCache = await loadIndicatorCacheFromDb();
+          if (dbCache && dbCache.indicators && dbCache.indicators.length > 0) {
+            cachedIndicators = dbCache.indicators;
+            if (dbCache.riskScore) cachedRiskScore = dbCache.riskScore;
+            if (dbCache.marketPulse && dbCache.marketPulse.length > 0) cachedMarketPulse = dbCache.marketPulse;
+            if (dbCache.systemTrust) cachedSystemTrust = dbCache.systemTrust;
+            if (dbCache.news && dbCache.news.length > 0) cachedNews = dbCache.news;
+            if (dbCache.lastSyncTimestamp) lastSyncTimestamp = dbCache.lastSyncTimestamp;
+          }
+        } catch (err) {
+          console.warn('[LiveStore] Error hydrating from Neon cache:', err);
+        }
+      })().finally(() => {
+        hydrationInFlight = null;
+      });
+    }
+    await hydrationInFlight;
   }
 }
 
-// ─── Fast Synchronous & Asynchronous Getters ───
+// ─── Promise-Locked Async Getters ───
+
+export async function getLiveIndicatorsAsync(): Promise<Indicator[]> {
+  await ensureCacheHydrated();
+  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
+    await refreshInFlight;
+  }
+  return cachedIndicators;
+}
+
+export async function getLiveRiskScoreAsync(): Promise<CompositeRiskScore> {
+  await ensureCacheHydrated();
+  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
+    await refreshInFlight;
+  }
+  return cachedRiskScore;
+}
+
+export async function getLiveMarketPulseAsync(): Promise<MarketPulse[]> {
+  await ensureCacheHydrated();
+  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
+    await refreshInFlight;
+  }
+  return cachedMarketPulse;
+}
+
+export async function getLiveSystemTrustAsync(): Promise<SystemTrust> {
+  await ensureCacheHydrated();
+  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
+    await refreshInFlight;
+  }
+  return cachedSystemTrust;
+}
+
+export async function getLiveNewsAsync(): Promise<NewsArticle[]> {
+  await ensureCacheHydrated();
+  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
+    await refreshInFlight;
+  }
+  return cachedNews;
+}
+
+// ─── Fast Synchronous Fallback Getters ───
+// Kept for synchronous client / utility contexts where async is unavailable.
 
 export function getLiveIndicators(): Indicator[] {
   if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
-    refreshLiveData().catch(() => { });
+    if (!refreshInFlight) {
+      refreshInFlight = refreshLiveData()
+        .then(() => {})
+        .finally(() => {
+          refreshInFlight = null;
+        });
+    }
   }
   return cachedIndicators;
 }
@@ -259,8 +394,5 @@ export function getLiveSystemTrust(): SystemTrust {
 }
 
 export function getLiveNews(): NewsArticle[] {
-  if (typeof window === 'undefined' && Date.now() - lastSyncTimestamp > 1800000) {
-    refreshLiveData().catch(() => { });
-  }
   return cachedNews;
 }

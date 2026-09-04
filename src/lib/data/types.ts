@@ -32,6 +32,7 @@ export interface Indicator {
   source: string;
   sourceUrl?: string;
   freshness: Freshness;
+  dataOrigin: 'live' | 'fallback';
   lastUpdated: string; // ISO timestamp
   riskBand: RiskBand;
   category: IndicatorCategory;

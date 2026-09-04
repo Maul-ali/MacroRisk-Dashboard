@@ -21,8 +21,8 @@ const TRACKED_TOPICS = [
   },
 ];
 
-export default function NewsControlPage() {
-  const articles = getNewsArticles();
+export default async function NewsControlPage() {
+  const articles = await getNewsArticles();
 
   // Aggregate source counts dynamically
   const sourceCounts: Record<string, number> = {};

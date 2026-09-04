@@ -55,20 +55,22 @@ export async function fetchLiveMacro(): Promise<Record<string, MacroResult>> {
       value: cpi.value,
       change1M: -0.1,
       lastUpdated: nowIso,
-      source: 'World Bank Open Data / BPS',
+      source: 'World Bank Open Data',
     };
   }
 
   // Real GDP Growth YoY (NY.GDP.MKTP.KD.ZG)
   const gdp = await fetchWorldBankIndicator('NY.GDP.MKTP.KD.ZG');
   if (gdp) {
-    results['real-gdp'] = {
-      id: 'real-gdp',
+    const gdpResult: MacroResult = {
+      id: 'real-gdp-yoy',
       value: gdp.value,
       change1M: 0.1,
       lastUpdated: nowIso,
-      source: 'World Bank Open Data / BPS',
+      source: 'World Bank Open Data',
     };
+    results['real-gdp-yoy'] = gdpResult;
+    results['real-gdp'] = { ...gdpResult, id: 'real-gdp' };
   }
 
   return results;

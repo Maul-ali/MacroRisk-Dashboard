@@ -35,7 +35,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
           rate: Math.round(rates.IDR),
           change1M: -0.4, // Baseline estimated monthly delta
           lastUpdated: data.time_last_update_utc ? new Date(data.time_last_update_utc).toISOString() : nowIso,
-          source: 'Open Exchange Rates (BI Market Proxy)',
+          source: 'open.er-api.com (mid-market composite)',
         };
       }
 
@@ -46,7 +46,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
           rate: Math.round(rates.JPY * 100) / 100,
           change1M: -1.2,
           lastUpdated: nowIso,
-          source: 'ECB / Global FX Feed',
+          source: 'open.er-api.com (mid-market composite)',
         };
       }
     }
