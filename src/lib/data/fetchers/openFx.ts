@@ -4,7 +4,7 @@
 export interface FxResult {
   id: string;
   rate: number;
-  change1M: number;
+  change1M: number | null;
   lastUpdated: string;
   source: string;
 }
@@ -33,7 +33,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
         results['usd-idr'] = {
           id: 'usd-idr',
           rate: Math.round(rates.IDR),
-          change1M: -0.4, // Baseline estimated monthly delta
+          change1M: null, // Computed from indicator_history
           lastUpdated: data.time_last_update_utc ? new Date(data.time_last_update_utc).toISOString() : nowIso,
           source: 'open.er-api.com (mid-market composite)',
         };
@@ -44,7 +44,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
         results['usd-jpy'] = {
           id: 'usd-jpy',
           rate: Math.round(rates.JPY * 100) / 100,
-          change1M: -1.2,
+          change1M: null, // Computed from indicator_history
           lastUpdated: nowIso,
           source: 'open.er-api.com (mid-market composite)',
         };
@@ -69,7 +69,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
           results['usd-idr'] = {
             id: 'usd-idr',
             rate: Math.round(data.rates.IDR),
-            change1M: -0.4,
+            change1M: null,
             lastUpdated: nowIso,
             source: 'ECB Reference Rates',
           };
@@ -78,7 +78,7 @@ export async function fetchLiveFx(): Promise<Record<string, FxResult>> {
           results['usd-jpy'] = {
             id: 'usd-jpy',
             rate: Math.round(data.rates.JPY * 100) / 100,
-            change1M: -1.2,
+            change1M: null,
             lastUpdated: nowIso,
             source: 'ECB Reference Rates',
           };

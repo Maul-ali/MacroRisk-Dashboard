@@ -2,6 +2,8 @@ import PageHeader from '@/components/shared/PageHeader';
 import { getAllIndicators } from '@/lib/data/indicators';
 import { clsx } from 'clsx';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CatalogPage() {
   const indicators = await getAllIndicators();
 
@@ -69,14 +71,24 @@ export default async function CatalogPage() {
                 </td>
                 <td className="!text-[13px]">{ind.source}</td>
                 <td>
-                  <span
-                    className={clsx(
-                      'freshness-badge',
-                      `freshness--${ind.freshness.toLowerCase()}`
-                    )}
-                  >
-                    {ind.freshness}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={clsx(
+                        'freshness-badge',
+                        `freshness--${ind.freshness.toLowerCase()}`
+                      )}
+                    >
+                      {ind.freshness}
+                    </span>
+                    <span
+                      className={clsx(
+                        'freshness-badge',
+                        ind.dataOrigin === 'live' ? 'freshness--fresh' : 'freshness--estimated'
+                      )}
+                    >
+                      {ind.dataOrigin === 'live' ? 'Live' : 'Fallback'}
+                    </span>
+                  </div>
                 </td>
                 <td className="!text-xs !text-text-muted">
                   {new Date(ind.lastUpdated).toLocaleDateString('en-US', {

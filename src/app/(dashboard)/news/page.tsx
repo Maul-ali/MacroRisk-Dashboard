@@ -3,6 +3,8 @@ import { getNewsArticles } from '@/lib/data/indicators';
 import { ExternalLink, MapPin, Tag } from 'lucide-react';
 import { clsx } from 'clsx';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewsPage() {
   const articles = await getNewsArticles();
 

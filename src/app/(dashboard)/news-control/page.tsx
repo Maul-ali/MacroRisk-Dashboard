@@ -2,6 +2,8 @@ import PageHeader from '@/components/shared/PageHeader';
 import { getNewsArticles } from '@/lib/data/indicators';
 import { Radio, Clock, Database, Shield, Tag, RefreshCw } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 const TRACKED_TOPICS = [
   {
     group: 'Geopolitics',

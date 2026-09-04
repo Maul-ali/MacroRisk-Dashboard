@@ -4,6 +4,8 @@ import { getIndicatorsByCategory, getAllIndicators } from '@/lib/data/indicators
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { clsx } from 'clsx';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MacroPage() {
   const [fxMacro, allIndicators] = await Promise.all([
     getIndicatorsByCategory('FX & Macro'),
@@ -25,9 +27,19 @@ export default async function MacroPage() {
               <span className="text-xs text-text-muted font-medium uppercase tracking-wider">
                 {ind.name}
               </span>
-              <span className={clsx('freshness-badge', `freshness--${ind.freshness.toLowerCase()}`)}>
-                {ind.freshness}
-              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className={clsx('freshness-badge', `freshness--${ind.freshness.toLowerCase()}`)}>
+                  {ind.freshness}
+                </span>
+                <span
+                  className={clsx(
+                    'freshness-badge',
+                    ind.dataOrigin === 'live' ? 'freshness--fresh' : 'freshness--estimated'
+                  )}
+                >
+                  {ind.dataOrigin === 'live' ? 'Live' : 'Fallback'}
+                </span>
+              </div>
             </div>
             <div className="flex items-baseline gap-3 mb-2">
               <span className="text-2xl font-bold text-text-primary tabular-nums">

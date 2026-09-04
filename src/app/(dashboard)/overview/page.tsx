@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
+
+export const dynamic = 'force-dynamic';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
 import {
   getCompositeRiskScore,
