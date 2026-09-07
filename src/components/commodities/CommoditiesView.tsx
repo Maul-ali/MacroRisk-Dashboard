@@ -116,7 +116,7 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
                                     : 'hover:bg-bg-card-hover'
                                 )}
                               >
-                                <td className="!text-text-primary !font-medium py-3 px-4 w-[28%]">
+                                <td className="!text-text-primary !font-medium py-3 px-4 w-[26%]">
                                   <div className="flex items-center gap-2">
                                     <span>{ind.name}</span>
                                     {isSelected && (
@@ -124,10 +124,10 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
                                     )}
                                   </div>
                                 </td>
-                                <td className="!font-mono !text-text-primary tabular-nums py-3 px-4 w-[20%]">
+                                <td className="!font-mono !text-text-primary tabular-nums py-3 px-4 w-[18%]">
                                   {ind.displayValue}
                                 </td>
-                                <td className="py-3 px-4 w-[16%]">
+                                <td className="py-3 px-4 w-[14%]">
                                   {ind.change1M !== null ? (
                                     <span
                                       className={clsx(
@@ -151,7 +151,7 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
                                     <span className="text-text-muted text-xs">—</span>
                                   )}
                                 </td>
-                                <td className="py-3 px-4 w-[16%]">
+                                <td className="py-3 px-4 w-[14%]">
                                   <span
                                     className={clsx(
                                       'risk-badge !text-[10px] !py-0.5 !px-2',
@@ -161,18 +161,28 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
                                     {ind.riskBand}
                                   </span>
                                 </td>
-                                <td className="!text-xs text-text-secondary py-3 px-4 w-[12%]">
+                                <td className="!text-xs text-text-secondary py-3 px-4 w-[14%]">
                                   {ind.source}
                                 </td>
-                                <td className="py-3 px-4 w-[8%]">
-                                  <span
-                                    className={clsx(
-                                      'freshness-badge',
-                                      `freshness--${ind.freshness.toLowerCase()}`
-                                    )}
-                                  >
-                                    {ind.freshness}
-                                  </span>
+                                <td className="py-3 px-4 w-[14%]">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                      className={clsx(
+                                        'freshness-badge',
+                                        `freshness--${ind.freshness.toLowerCase()}`
+                                      )}
+                                    >
+                                      {ind.freshness}
+                                    </span>
+                                    <span
+                                      className={clsx(
+                                        'freshness-badge',
+                                        ind.dataOrigin === 'live' ? 'freshness--fresh' : 'freshness--estimated'
+                                      )}
+                                    >
+                                      {ind.dataOrigin === 'live' ? 'Live' : 'Fallback'}
+                                    </span>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -233,7 +243,17 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
             </div>
             <div className="flex items-center justify-between text-xs text-text-muted mt-2 pt-2 border-t border-border-subtle">
               <span>Source: {selectedIndicator.source}</span>
-              <span className="capitalize">{selectedIndicator.freshness}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="capitalize">{selectedIndicator.freshness}</span>
+                <span
+                  className={clsx(
+                    'freshness-badge text-[10px]',
+                    selectedIndicator.dataOrigin === 'live' ? 'freshness--fresh' : 'freshness--estimated'
+                  )}
+                >
+                  {selectedIndicator.dataOrigin === 'live' ? 'Live' : 'Fallback'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -334,12 +354,12 @@ export default function CommoditiesView({ indicators }: CommoditiesViewProps) {
           </div>
         </div>
 
-        {/* Note if Estimated */}
-        {selectedIndicator.freshness === 'Estimated' && (
+        {/* Note if Estimated / Fallback */}
+        {(selectedIndicator.freshness === 'Estimated' || selectedIndicator.dataOrigin === 'fallback') && (
           <div className="mt-4 p-2.5 rounded-lg bg-bg-tertiary/40 border border-border-subtle text-[11px] text-text-muted flex items-center gap-1.5">
             <Info className="w-3.5 h-3.5 text-text-muted shrink-0" />
             <span>
-              Values are estimated/annual benchmark. Live tracking requires paid market tier.
+              Values are benchmark/fallback estimates. Real-time direct feed requires specialized market subscription.
             </span>
           </div>
         )}

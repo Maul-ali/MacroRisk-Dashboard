@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import PageHeader from '@/components/shared/PageHeader';
+
+export const dynamic = 'force-dynamic';
 import RiskTrajectoryChart from '@/components/charts/RiskTrajectoryChart';
 import {
   getCompositeRiskScore,
@@ -32,10 +34,12 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   'Domestic Macro & Policy': Building2,
 };
 
-export default function OverviewPage() {
-  const risk = getCompositeRiskScore();
-  const pulse = getMarketPulse();
-  const trust = getSystemTrust();
+export default async function OverviewPage() {
+  const [risk, pulse, trust] = await Promise.all([
+    getCompositeRiskScore(),
+    getMarketPulse(),
+    getSystemTrust(),
+  ]);
 
   const riskColor =
     risk.score >= 80

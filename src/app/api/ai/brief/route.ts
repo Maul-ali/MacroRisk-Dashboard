@@ -46,10 +46,12 @@ export async function POST(req: Request) {
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
 
     // Gather Live Dashboard Context
-    const compositeRisk = getCompositeRiskScore();
-    const marketPulse = getMarketPulse();
+    const [compositeRisk, marketPulse, allIndicators] = await Promise.all([
+      getCompositeRiskScore(),
+      getMarketPulse(),
+      getAllIndicators(),
+    ]);
     const attentionParams = getAttentionParameters().slice(0, 8);
-    const allIndicators = getAllIndicators();
 
     // Format indicator summary
     const keyIndicators = allIndicators.map((ind) => ({

@@ -2,6 +2,8 @@ import PageHeader from '@/components/shared/PageHeader';
 import { getNewsArticles } from '@/lib/data/indicators';
 import { Radio, Clock, Database, Shield, Tag, RefreshCw } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 const TRACKED_TOPICS = [
   {
     group: 'Geopolitics',
@@ -21,8 +23,8 @@ const TRACKED_TOPICS = [
   },
 ];
 
-export default function NewsControlPage() {
-  const articles = getNewsArticles();
+export default async function NewsControlPage() {
+  const articles = await getNewsArticles();
 
   // Aggregate source counts dynamically
   const sourceCounts: Record<string, number> = {};

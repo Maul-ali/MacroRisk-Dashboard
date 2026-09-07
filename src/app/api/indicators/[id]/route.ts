@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const indicator = getIndicator(id);
+  const indicator = await getIndicator(id);
 
   if (!indicator) {
     return NextResponse.json(
