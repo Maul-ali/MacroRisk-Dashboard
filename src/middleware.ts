@@ -107,6 +107,9 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
   if (!token) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
@@ -115,6 +118,11 @@ export async function middleware(request: NextRequest) {
   const isValid = await verifyTokenEdge(token);
 
   if (!isValid) {
+    if (pathname.startsWith('/api/')) {
+      const response = NextResponse.json({ error: 'Unauthorized: Invalid or expired session' }, { status: 401 });
+      response.cookies.delete(AUTH_COOKIE_NAME);
+      return response;
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     // Clear the invalid cookie

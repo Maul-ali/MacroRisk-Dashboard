@@ -67,23 +67,46 @@ function extractRawTag(xml: string, tag: string): string {
   return content;
 }
 
-// Extract link URL specifically
-function extractLinkUrl(itemXml: string): string {
+// Extract link URL specifically without stripping http protocol
+function extractLinkUrl(itemXml: string, fallbackUrl?: string): string {
   // Check <link> tag
   const linkMatch = itemXml.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
   if (linkMatch && linkMatch[1]) {
-    const raw = cleanHtmlText(linkMatch[1]);
+    let raw = linkMatch[1].trim();
+    if (raw.startsWith('<![CDATA[') && raw.endsWith(']]>')) {
+      raw = raw.slice(9, -3).trim();
+    }
+    raw = raw.replace(/&amp;/g, '&');
     if (raw.startsWith('http')) return raw;
   }
 
   // Check <link href="..." />
   const hrefMatch = itemXml.match(/<link[^>]+href=["']([^"']+)["']/i);
-  if (hrefMatch && hrefMatch[1]) return hrefMatch[1];
+  if (hrefMatch && hrefMatch[1]) {
+    const raw = hrefMatch[1].trim().replace(/&amp;/g, '&');
+    if (raw.startsWith('http')) return raw;
+  }
 
-  // Check <guid isPermaLink="true">
+  // Check <source url="..." />
+  const sourceMatch = itemXml.match(/<source[^>]+url=["']([^"']+)["']/i);
+  if (sourceMatch && sourceMatch[1]) {
+    const raw = sourceMatch[1].trim().replace(/&amp;/g, '&');
+    if (raw.startsWith('http')) return raw;
+  }
+
+  // Check <guid isPermaLink="true"> or any http guid
   const guidMatch = itemXml.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
-  if (guidMatch && guidMatch[1] && guidMatch[1].startsWith('http')) {
-    return guidMatch[1].trim();
+  if (guidMatch && guidMatch[1]) {
+    let raw = guidMatch[1].trim();
+    if (raw.startsWith('<![CDATA[') && raw.endsWith(']]>')) {
+      raw = raw.slice(9, -3).trim();
+    }
+    raw = raw.replace(/&amp;/g, '&');
+    if (raw.startsWith('http')) return raw;
+  }
+
+  if (fallbackUrl && fallbackUrl.startsWith('http')) {
+    return fallbackUrl;
   }
 
   return 'https://news.google.com';
@@ -91,20 +114,32 @@ function extractLinkUrl(itemXml: string): string {
 
 // Extract source domain or channel
 function extractSource(link: string, rawSource: string): string {
-  if (rawSource && rawSource.length > 2) return rawSource;
+  if (rawSource && rawSource.length > 1) return rawSource;
   try {
     const url = new URL(link);
-    return url.hostname.replace('www.', '');
+    const host = url.hostname.replace(/^www\./, '');
+    if (host && !host.includes('google.com')) return host;
   } catch {
-    return 'Global News Wire';
+    // ignore
   }
+  return 'Global Risk Wire';
 }
 
 // Categorize region based on text keywords
 function detectRegion(text: string): string {
   const lower = text.toLowerCase();
-  if (lower.includes('indonesia') || lower.includes('rupiah') || lower.includes('jakarta') || lower.includes('asean')) {
-    return 'Indonesia';
+  if (
+    lower.includes('indonesia') ||
+    lower.includes('rupiah') ||
+    lower.includes('jakarta') ||
+    lower.includes('asean') ||
+    lower.includes('lewotobi') ||
+    lower.includes('marapi') ||
+    lower.includes('ruang') ||
+    lower.includes('semeru') ||
+    lower.includes('sunda strait')
+  ) {
+    return 'Indonesia / Ring of Fire';
   }
   if (
     lower.includes('middle east') ||
@@ -114,18 +149,19 @@ function detectRegion(text: string): string {
     lower.includes('iran') ||
     lower.includes('israel') ||
     lower.includes('gaza') ||
-    lower.includes('suez')
+    lower.includes('suez') ||
+    lower.includes('bab el-mandeb')
   ) {
-    return 'Middle East';
+    return 'Middle East / Chokepoints';
   }
-  if (lower.includes('china') || lower.includes('beijing') || lower.includes('asia')) {
+  if (lower.includes('malacca') || lower.includes('singapore') || lower.includes('china') || lower.includes('beijing') || lower.includes('asia') || lower.includes('taiwan')) {
     return 'Asia-Pacific';
   }
   if (lower.includes('russia') || lower.includes('ukraine') || lower.includes('europe') || lower.includes('black sea')) {
     return 'Europe / Black Sea';
   }
-  if (lower.includes('u.s.') || lower.includes('united states') || lower.includes('biden') || lower.includes('trump') || lower.includes('lng export')) {
-    return 'North America';
+  if (lower.includes('u.s.') || lower.includes('united states') || lower.includes('biden') || lower.includes('trump') || lower.includes('lng export') || lower.includes('panama')) {
+    return 'Americas';
   }
   return 'Global';
 }
@@ -135,20 +171,37 @@ function detectTags(text: string): string[] {
   const lower = text.toLowerCase();
   const tags: string[] = [];
 
+  if (
+    lower.includes('volcano') ||
+    lower.includes('eruption') ||
+    lower.includes('volcanic') ||
+    lower.includes('ash') ||
+    lower.includes('lewotobi') ||
+    lower.includes('marapi') ||
+    lower.includes('ruang') ||
+    lower.includes('semeru') ||
+    lower.includes('ring of fire') ||
+    lower.includes('disaster')
+  ) {
+    tags.push('Volcano & Geohazard', 'Logistics');
+  }
   if (lower.includes('fertilizer') || lower.includes('urea') || lower.includes('ammonia') || lower.includes('potash') || lower.includes('phosphate')) {
     tags.push('Fertilizer', 'Agriculture');
+  }
+  if (lower.includes('sulfur') || lower.includes('sulfuric') || lower.includes('feedstock')) {
+    tags.push('Sulfur & Feedstock');
   }
   if (lower.includes('oil') || lower.includes('brent') || lower.includes('crude') || lower.includes('petroleum') || lower.includes('opec')) {
     tags.push('Energy', 'Crude Oil');
   }
-  if (lower.includes('gas') || lower.includes('lng') || lower.includes('henry hub') || lower.includes('feedstock')) {
+  if (lower.includes('gas') || lower.includes('lng') || lower.includes('henry hub') || lower.includes('pipeline')) {
     tags.push('Natural Gas', 'Feedstock');
   }
-  if (lower.includes('shipping') || lower.includes('red sea') || lower.includes('strait') || lower.includes('vessel') || lower.includes('freight')) {
-    tags.push('Shipping', 'Supply Chain');
+  if (lower.includes('shipping') || lower.includes('red sea') || lower.includes('hormuz') || lower.includes('malacca') || lower.includes('suez') || lower.includes('strait') || lower.includes('vessel') || lower.includes('freight')) {
+    tags.push('Shipping', 'Chokepoints');
   }
-  if (lower.includes('inflation') || lower.includes('rate') || lower.includes('rupiah') || lower.includes('dollar') || lower.includes('tariff')) {
-    tags.push('Macroeconomics', 'FX');
+  if (lower.includes('inflation') || lower.includes('rate') || lower.includes('rupiah') || lower.includes('dollar') || lower.includes('tariff') || lower.includes('subsidy')) {
+    tags.push('Macro & FX', 'Trade Policy');
   }
 
   if (tags.length === 0) {
@@ -162,7 +215,12 @@ function detectTags(text: string): string[] {
 function calculateRelevance(text: string): number {
   const lower = text.toLowerCase();
   let score = 75;
-  const highPriorityWords = ['urea', 'ammonia', 'fertilizer', 'brent', 'crude', 'natural gas', 'hormuz', 'red sea', 'rupiah', 'phosphate', 'export restriction', 'sanction'];
+  const highPriorityWords = [
+    'urea', 'ammonia', 'fertilizer', 'brent', 'crude', 'natural gas', 
+    'hormuz', 'red sea', 'bab el-mandeb', 'malacca', 'rupiah', 'phosphate', 
+    'potash', 'sulfur', 'export restriction', 'sanction', 'volcano', 
+    'eruption', 'lewotobi', 'marapi', 'ash cloud', 'flight cancel'
+  ];
   for (const word of highPriorityWords) {
     if (lower.includes(word)) score += 4;
   }
@@ -171,16 +229,32 @@ function calculateRelevance(text: string): number {
 
 const RSS_FEEDS = [
   {
-    url: 'https://news.google.com/rss/search?q=fertilizer+OR+urea+OR+ammonia+OR+"natural+gas"+OR+"brent+crude"+OR+"red+sea"+shipping&hl=en-US&gl=US&ceid=US:en',
-    fallbackSource: 'Global Commodity & Energy Wire',
+    url: 'https://news.google.com/rss/search?q=volcano+eruption+indonesia+OR+"Mount+Lewotobi"+OR+"Mount+Marapi"+OR+"Mount+Ruang"+OR+"Ring+of+Fire"&hl=en-US&gl=US&ceid=US:en',
+    fallbackSource: 'Volcano & Ring of Fire Alerts',
   },
   {
-    url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml',
-    fallbackSource: 'UN News Global',
+    url: 'https://news.google.com/rss/search?q="Strait+of+Hormuz"+OR+"Red+Sea"+OR+"Bab+el-Mandeb"+OR+"Malacca+Strait"+shipping&hl=en-US&gl=US&ceid=US:en',
+    fallbackSource: 'Maritime Chokepoints Wire',
+  },
+  {
+    url: 'https://oilprice.com/rss/main',
+    fallbackSource: 'OilPrice.com',
+  },
+  {
+    url: 'https://feeds.finance.yahoo.com/rss/2.0/headline?s=CL=F,NG=F&region=US&lang=en-US',
+    fallbackSource: 'Yahoo Finance Commodities',
+  },
+  {
+    url: 'https://news.google.com/rss/search?q=fertilizer+OR+urea+OR+ammonia+OR+"natural+gas"+feedstock+OR+"phosphate+rock"&hl=en-US&gl=US&ceid=US:en',
+    fallbackSource: 'Global Commodity Wire',
   },
   {
     url: 'https://www.eia.gov/rss/todayinenergy.xml',
     fallbackSource: 'U.S. EIA Today in Energy',
+  },
+  {
+    url: 'https://news.un.org/feed/subscribe/en/news/all/rss.xml',
+    fallbackSource: 'UN News Global',
   },
 ];
 
@@ -190,12 +264,12 @@ export async function fetchLiveNews(): Promise<NewsArticle[]> {
   for (const feed of RSS_FEEDS) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000);
+      const timeout = setTimeout(() => controller.abort(), 4500);
 
       const res = await fetch(feed.url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
         next: { revalidate: 1800 }, // 30 min cache
       });
@@ -206,26 +280,31 @@ export async function fetchLiveNews(): Promise<NewsArticle[]> {
       const xml = await res.text();
       const itemBlocks = xml.split('<item>').slice(1);
 
-      for (const itemBlock of itemBlocks.slice(0, 8)) {
+      for (const itemBlock of itemBlocks.slice(0, 6)) {
         const rawTitle = extractRawTag(itemBlock, 'title');
-        const rawLink = extractLinkUrl(itemBlock);
         const pubDateStr = extractRawTag(itemBlock, 'pubDate');
         const rawDesc = extractRawTag(itemBlock, 'description');
         const rawSource = extractRawTag(itemBlock, 'source');
+        const sourceUrlMatch = itemBlock.match(/<source[^>]+url=["']([^"']+)["']/i);
+        const sourceUrlAttr = sourceUrlMatch && sourceUrlMatch[1] ? sourceUrlMatch[1] : '';
 
         let cleanTitle = cleanHtmlText(rawTitle);
         if (!cleanTitle) continue;
 
         // Separate source name from Google News title if formatted as "Title - Source"
         let detectedSource = cleanHtmlText(rawSource);
-        if (!detectedSource && cleanTitle.includes(' - ')) {
+        if (cleanTitle.includes(' - ')) {
           const parts = cleanTitle.split(' - ');
-          if (parts.length >= 2 && parts[parts.length - 1].length < 40) {
-            detectedSource = parts.pop()!.trim();
-            cleanTitle = parts.join(' - ').trim();
+          const potentialSource = parts[parts.length - 1].trim();
+          if (parts.length >= 2 && potentialSource.length < 40) {
+            if (!detectedSource || potentialSource.toLowerCase() === detectedSource.toLowerCase()) {
+              detectedSource = detectedSource || potentialSource;
+              cleanTitle = parts.slice(0, -1).join(' - ').trim();
+            }
           }
         }
 
+        const rawLink = extractLinkUrl(itemBlock, sourceUrlAttr);
         const sourceName = detectedSource || extractSource(rawLink, feed.fallbackSource);
         const publishedAt = pubDateStr ? new Date(pubDateStr).toISOString() : new Date().toISOString();
 

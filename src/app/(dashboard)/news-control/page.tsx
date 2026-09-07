@@ -1,25 +1,30 @@
 import PageHeader from '@/components/shared/PageHeader';
 import { getNewsArticles } from '@/lib/data/indicators';
 import { Radio, Clock, Database, Shield, Tag, RefreshCw } from 'lucide-react';
+import AiTopicScanner from '@/components/news/AiTopicScanner';
 
 export const dynamic = 'force-dynamic';
 
 const TRACKED_TOPICS = [
   {
-    group: 'Geopolitics',
-    topics: ['Hormuz', 'Middle East', 'Iran-Israel', 'Russia-Ukraine', 'Sanctions'],
+    group: 'Geohazards & Volcanoes',
+    topics: ['Mount Lewotobi', 'Mount Marapi', 'Mount Ruang', 'Ring of Fire', 'Ash Logistics', 'Sulfur Feedstock'],
+  },
+  {
+    group: 'Geopolitics & Chokepoints',
+    topics: ['Hormuz Strait', 'Red Sea / Yemen', 'Iran-Israel', 'Black Sea Corridor', 'Sanctions'],
   },
   {
     group: 'Strategic Waterways',
-    topics: ['Red Sea', 'Bab el-Mandeb', 'Suez', 'Black Sea', 'Malacca'],
+    topics: ['Malacca Strait', 'Bab el-Mandeb', 'Suez Canal', 'Panama Canal', 'Sunda Strait'],
   },
   {
-    group: 'Economics',
-    topics: ['Global Economy', 'Recession', 'Inflation', 'Rates', 'Trade Wars'],
+    group: 'Feedstocks & Commodities',
+    topics: ['Natural Gas / LNG', 'Urea', 'Ammonia', 'Phosphate Rock', 'Potash', 'Brent Crude'],
   },
   {
-    group: 'FI-Specific',
-    topics: ['Urea', 'Ammonia', 'Natural Gas', 'Sulfur/Phosphate', 'Rupiah'],
+    group: 'Macro & Trade Policy',
+    topics: ['USD/IDR Rupiah', 'BI & Fed Rates', 'Fertilizer Subsidies', 'Export Quotas', 'Import Tariffs'],
   },
 ];
 
@@ -134,23 +139,26 @@ export default async function NewsControlPage() {
         </div>
       </div>
 
+      {/* AI Dynamic Topic Scanner */}
+      <AiTopicScanner />
+
       {/* Tracked Topics */}
       <div className="glass-card p-6">
         <h3 className="text-sm font-semibold text-text-secondary mb-4 flex items-center gap-2">
           <Tag className="w-4 h-4" />
-          Tracked Topics
+          Tracked Topics & Monitored Search Keywords
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {TRACKED_TOPICS.map((group) => (
-            <div key={group.group}>
-              <h4 className="text-xs font-semibold text-text-muted mb-2 uppercase tracking-wider">
+            <div key={group.group} className="space-y-2">
+              <h4 className="text-xs font-semibold text-text-primary uppercase tracking-wider">
                 {group.group}
               </h4>
               <div className="flex flex-wrap gap-1.5">
                 {group.topics.map((topic) => (
                   <span
                     key={topic}
-                    className="px-2 py-1 rounded text-xs font-medium bg-bg-tertiary text-text-secondary hover:bg-bg-card-hover transition-colors"
+                    className="px-2 py-1 rounded text-xs font-medium bg-bg-tertiary text-text-secondary hover:bg-bg-card-hover hover:text-text-primary transition-colors border border-border/40"
                   >
                     {topic}
                   </span>
