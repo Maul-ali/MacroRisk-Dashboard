@@ -409,3 +409,16 @@ body {
 .change-neutral {
   color: var(--text-muted);
 }
+
+/* ─── Logo theme adapter ─── */
+.dark-invert-logo {
+  filter: none;
+}
+.dark .dark-invert-logo,
+[data-theme="dark"] .dark-invert-logo {
+  filter: brightness(0) invert(1);
+}
+.light .dark-invert-logo,
+[data-theme="light"] .dark-invert-logo {
+  filter: none !important;
+}

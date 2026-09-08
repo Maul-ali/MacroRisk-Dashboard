@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import {
@@ -34,40 +35,42 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Admin', icon: Settings },
 ];
 
-export default function Sidebar() {
+import { useSidebarOptional } from './SidebarContext';
+
+interface SidebarProps {
+  collapsed?: boolean;
+  onToggle?: () => void;
+}
+
+export default function Sidebar({ collapsed: propCollapsed, onToggle }: SidebarProps = {}) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const sidebarContext = useSidebarOptional();
+  const [localCollapsed, setLocalCollapsed] = useState(false);
+
+  const collapsed = propCollapsed !== undefined
+    ? propCollapsed
+    : (sidebarContext ? sidebarContext.collapsed : localCollapsed);
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else if (sidebarContext) {
+      sidebarContext.toggleCollapsed();
+    } else {
+      setLocalCollapsed((prev) => !prev);
+    }
+  };
+
   const isRiskProfile = pathname.startsWith('/risk-profile');
 
   return (
     <aside
       className={clsx(
-        'fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-border-primary transition-all duration-300 ease-in-out',
+        'fixed left-0 top-[64px] bottom-0 z-20 flex flex-col border-r border-border-primary transition-all duration-300 ease-in-out',
         collapsed ? 'w-[72px]' : 'w-[260px]'
       )}
       style={{ background: 'var(--gradient-sidebar)' }}
     >
-      {/* Brand Header */}
-      <div className="flex items-center gap-3 px-5 h-[64px] border-b border-border-primary">
-        <Link
-          href="/overview"
-          className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0 hover:opacity-90 transition-opacity"
-          style={{ background: 'var(--gradient-brand)' }}
-          title="MacroRisk Dashboard"
-        >
-          <Shield className="w-5 h-5 text-white" />
-        </Link>
-        {!collapsed && (
-          <div className="animate-fade-in overflow-hidden">
-            <h1 className="text-sm font-bold text-text-primary tracking-tight leading-tight whitespace-nowrap">
-              MacroRisk Dashboard
-            </h1>
-            <p className="text-[10px] font-medium text-text-muted tracking-widest uppercase whitespace-nowrap">
-              Indo Fertilizer
-            </p>
-          </div>
-        )}
-      </div>
 
       {/* Navigation — conditional */}
       {isRiskProfile ? (
@@ -190,7 +193,7 @@ export default function Sidebar() {
 
       {/* Collapse toggle */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={handleToggle}
         className="flex items-center justify-center h-10 border-t border-border-primary text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
