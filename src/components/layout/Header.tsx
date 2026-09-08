@@ -92,7 +92,7 @@ export default function Header() {
         </Link>
         <span className="text-border-primary select-none text-xs hidden sm:inline">/</span>
         <span className="text-sm font-semibold text-text-primary">
-          {isRiskProfile ? 'Fertilizer Indo Corporate Risk Profile' : 'RiskCompass'}
+          RiskCompass
         </span>
       </div>
 
