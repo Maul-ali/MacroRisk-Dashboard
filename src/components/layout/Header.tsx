@@ -3,6 +3,7 @@
 import { Clock, Signal, Sun, Moon, RotateCw, User, LogOut, LogIn } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -61,11 +62,37 @@ export default function Header() {
   const isDark = theme === 'dark';
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-[64px] px-6 border-b border-border-primary bg-bg-primary/80 backdrop-blur-xl transition-colors duration-200">
-      {/* Left: Breadcrumb area */}
+    <header className="sticky top-0 z-30 w-full flex items-center justify-between h-[64px] px-6 border-b border-border-primary bg-bg-primary/80 backdrop-blur-xl transition-colors duration-200">
+      {/* Left: Logo & Breadcrumb area */}
       <div className="flex items-center gap-3">
+        <Link
+          href="/overview"
+          className="flex items-center transition-opacity hover:opacity-90"
+          title="Pupuk Indonesia - Overview"
+        >
+          <Image
+            src="/Logo PIHC.png"
+            alt="Pupuk Indonesia Icon"
+            width={243}
+            height={361}
+            className="h-10 sm:h-11 w-auto object-contain"
+            priority
+          />
+          <Image
+            src="/PIHC Logo.png"
+            alt="Pupuk Indonesia"
+            width={590}
+            height={361}
+            className="dark-invert-logo h-10 sm:h-11 w-auto object-contain transition-all"
+            style={{
+              filter: isDark ? 'brightness(0) invert(1)' : 'none',
+            }}
+            priority
+          />
+        </Link>
+        <span className="text-border-primary select-none text-xs hidden sm:inline">/</span>
         <span className="text-sm font-semibold text-text-primary">
-          {isRiskProfile ? 'Fertilizer Indo Corporate Risk Profile' : 'Fertilizer Indo Macro Intelligence'}
+          {isRiskProfile ? 'Fertilizer Indo Corporate Risk Profile' : 'RiskCompass'}
         </span>
       </div>
 
