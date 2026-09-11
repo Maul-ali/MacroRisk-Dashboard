@@ -233,50 +233,6 @@ export default async function OverviewPage() {
         </div>
       </div>
 
-      {/* ── AI Executive Briefing CTA Banner ── */}
-      <Link
-        href="/briefing"
-        className="block group"
-      >
-        <div
-          className="glass-card p-6 relative overflow-hidden border border-chart-1/20 hover:border-chart-1/40 transition-all cursor-pointer"
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.06), var(--bg-card))',
-          }}
-        >
-          {/* Ambient Glow */}
-          <div className="absolute top-0 right-0 w-96 h-32 bg-gradient-to-l from-chart-1/10 to-transparent blur-3xl pointer-events-none group-hover:from-chart-1/15 transition-all" />
-          <div className="absolute bottom-0 left-0 w-64 h-24 bg-gradient-to-r from-chart-2/8 to-transparent blur-3xl pointer-events-none" />
-
-          <div className="flex items-center justify-between relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-chart-1 to-chart-2 flex items-center justify-center shadow-glow-blue text-white group-hover:scale-105 transition-transform">
-                <Sparkles className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h3 className="text-base font-bold text-text-primary">
-                    AI Executive Briefing
-                  </h3>
-                  <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-chart-1/15 text-chart-1 border border-chart-1/30 uppercase tracking-wider">
-                    <Bot className="w-2.5 h-2.5" />
-                    Multi-Model AI
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mt-0.5">
-                  Sintesis otomatis intelijen makro, komoditas energi, dan 43 parameter profil risiko korporasi menggunakan Google Gemini & DeepSeek.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-chart-1 group-hover:translate-x-1 transition-transform">
-              <span className="text-xs font-bold hidden sm:inline">Buka Briefing</span>
-              <ArrowRight className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </Link>
-
       {/* ── Risk Trajectory Chart ── */}
       <RiskTrajectoryChart initialHistory={getRiskHistory()} />
 
@@ -368,6 +324,7 @@ export default async function OverviewPage() {
           </div>
         </div>
       </div>
+
 
       {/* ── System Trust ── */}
       <div className="glass-card p-4">
