@@ -110,3 +110,88 @@ export function computeChange1M(
   }
   return Math.round(((currentValue - monthAgoValue) / monthAgoValue) * 1000) / 10;
 }
+
+export interface IndicatorHistoryPoint {
+  date: string;
+  value: number;
+}
+
+/**
+ * Phase 3: Fetches daily historical time-series points from Neon indicator_history
+ * for a single indicator.
+ */
+export async function getHistorySeriesForIndicator(
+  indicatorId: string,
+  days: number = 365
+): Promise<IndicatorHistoryPoint[]> {
+  try {
+    await ensureHistoryTable();
+    const rows = await queryNeon<{ date: string; value: string | number }>(
+      `
+      SELECT DISTINCT ON (date_trunc('day', fetched_at))
+        to_char(fetched_at, 'YYYY-MM-DD') as date,
+        value
+      FROM indicator_history
+      WHERE indicator_id = $1
+        AND fetched_at >= now() - ($2 || ' days')::interval
+      ORDER BY date_trunc('day', fetched_at) ASC, fetched_at DESC;
+      `,
+      [indicatorId, days]
+    );
+
+    if (!rows || rows.length === 0) return [];
+
+    return rows.map((r) => ({
+      date: r.date,
+      value: Number(r.value),
+    }));
+  } catch (err) {
+    console.warn(`[IndicatorHistory] Error fetching series for ${indicatorId}:`, err);
+    return [];
+  }
+}
+
+/**
+ * Phase 3: Batch fetches daily historical points for multiple indicators in a single SQL query.
+ * Returns a Map of indicatorId -> IndicatorHistoryPoint[]
+ */
+export async function getHistorySeriesForIndicators(
+  indicatorIds: string[],
+  days: number = 365
+): Promise<Map<string, IndicatorHistoryPoint[]>> {
+  const result = new Map<string, IndicatorHistoryPoint[]>();
+  if (!indicatorIds || indicatorIds.length === 0) return result;
+
+  try {
+    await ensureHistoryTable();
+    const rows = await queryNeon<{ indicatorId: string; date: string; value: string | number }>(
+      `
+      SELECT DISTINCT ON (indicator_id, date_trunc('day', fetched_at))
+        indicator_id as "indicatorId",
+        to_char(fetched_at, 'YYYY-MM-DD') as date,
+        value
+      FROM indicator_history
+      WHERE indicator_id = ANY($1::text[])
+        AND fetched_at >= now() - ($2 || ' days')::interval
+      ORDER BY indicator_id, date_trunc('day', fetched_at) ASC, fetched_at DESC;
+      `,
+      [indicatorIds, days]
+    );
+
+    if (rows && rows.length > 0) {
+      for (const row of rows) {
+        if (!result.has(row.indicatorId)) {
+          result.set(row.indicatorId, []);
+        }
+        result.get(row.indicatorId)!.push({
+          date: row.date,
+          value: Number(row.value),
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[IndicatorHistory] Error fetching batch series:', err);
+  }
+
+  return result;
+}
